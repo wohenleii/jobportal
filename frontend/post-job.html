@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post a Job — JobPortal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/index.html">Job<span>Portal</span></a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/jobs.html">Browse Jobs</a></li>
+      </ul>
+      <ul class="navbar-nav align-items-center" id="navAuth"></ul>
+    </div>
+  </div>
+</nav>
+
+<div class="bg-primary text-white py-4">
+  <div class="container">
+    <h1 class="fw-bold mb-0">Post a Job</h1>
+    <p class="opacity-75 mb-0 mt-1">Reach thousands of qualified candidates</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="bg-white rounded-3 p-4 shadow-sm border">
+        <div id="formAlert" class="alert d-none"></div>
+
+        <form id="postJobForm" novalidate>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Job Title <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="title" placeholder="e.g. Senior Frontend Developer" required />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Job Type <span class="text-danger">*</span></label>
+              <select class="form-select" id="job_type" required>
+                <option value="">Select type...</option>
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="internship">Internship</option>
+                <option value="contract">Contract</option>
+                <option value="remote">Remote</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Category</label>
+              <input type="text" class="form-control" id="category" placeholder="e.g. Technology, Design..." />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Location <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="location" placeholder="e.g. San Francisco, CA or Remote" required />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Min Salary ($/year)</label>
+              <input type="number" class="form-control" id="salary_min" placeholder="e.g. 60000" min="0" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Max Salary ($/year)</label>
+              <input type="number" class="form-control" id="salary_max" placeholder="e.g. 90000" min="0" />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Application Deadline</label>
+              <input type="date" class="form-control" id="deadline" />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Job Description <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="description" rows="6"
+                placeholder="Describe the role, responsibilities, and what makes this opportunity exciting..." required></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Requirements</label>
+              <textarea class="form-control" id="requirements" rows="4"
+                placeholder="List required skills, experience, education..."></textarea>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+              <button type="submit" class="btn btn-primary fw-bold px-4" id="submitBtn">
+                <i class="bi bi-send me-2"></i>Post Job
+              </button>
+              <a href="/index.html" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  // Require employer/admin login
+  const user = api.getUser();
+  if (!user || (user.role !== 'employer' && user.role !== 'admin')) {
+    window.location.href = '/login.html';
+  }
+  updateNavAuth();
+
+  // Set min date for deadline
+  document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
+
+  function showAlert(msg, type = 'danger') {
+    const el = document.getElementById('formAlert');
+    el.className = `alert alert-${type}`;
+    el.textContent = msg;
+    el.classList.remove('d-none');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  document.getElementById('postJobForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+
+    const payload = {
+      title: document.getElementById('title').value.trim(),
+      job_type: document.getElementById('job_type').value,
+      category: document.getElementById('category').value.trim(),
+      location: document.getElementById('location').value.trim(),
+      salary_min: document.getElementById('salary_min').value || null,
+      salary_max: document.getElementById('salary_max').value || null,
+      deadline: document.getElementById('deadline').value || null,
+      description: document.getElementById('description').value.trim(),
+      requirements: document.getElementById('requirements').value.trim(),
+    };
+
+    if (!payload.title || !payload.job_type || !payload.location || !payload.description) {
+      showAlert('Please fill in all required fields.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Posting...';
+
+    try {
+      const data = await api.createJob(payload);
+      showAlert('✅ Job posted successfully! Redirecting...', 'success');
+      setTimeout(() => window.location.href = '/jobs.html', 1500);
+    } catch (err) {
+      showAlert(err.message || 'Failed to post job.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send me-2"></i>Post Job';
+    }
+  });
+</script>
+</body>
+</html>

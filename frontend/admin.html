@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — JobPortal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">Job<span>Portal</span> <small class="opacity-50 fs-6">Admin</small></div>
+  <ul class="nav flex-column mt-2">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showSection('dashboard', this)"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('users', this)"><i class="bi bi-people"></i> Users</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('jobs', this)"><i class="bi bi-briefcase"></i> Jobs</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('analytics', this)"><i class="bi bi-bar-chart"></i> Analytics</a></li>
+    <li class="nav-item mt-4"><a class="nav-link" href="/index.html"><i class="bi bi-house"></i> View Site</a></li>
+    <li class="nav-item"><a class="nav-link text-danger" href="#" onclick="api.logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+  </ul>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Top Bar -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <i class="bi bi-list"></i>
+      </button>
+      <h4 class="fw-bold d-inline" id="sectionTitle">Dashboard</h4>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small" id="adminName"></span>
+      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:700" id="adminAvatar">A</div>
+    </div>
+  </div>
+
+  <!-- ── Dashboard Section ─────────────────────────────────────────────── -->
+  <div id="section-dashboard">
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4" id="statCards">
+      <div class="col-12 text-center py-4"><div class="spinner-border text-primary"></div></div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-6">
+        <div class="stat-card">
+          <h6 class="fw-bold mb-3">Jobs by Category</h6>
+          <canvas id="categoryChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="stat-card">
+          <h6 class="fw-bold mb-3">Jobs by Type</h6>
+          <canvas id="typeChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Jobs Table -->
+    <div class="stat-card">
+      <h6 class="fw-bold mb-3">Top Viewed Jobs</h6>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>#</th><th>Job Title</th><th>Company</th><th>Views</th></tr>
+          </thead>
+          <tbody id="topJobsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Users Section ─────────────────────────────────────────────────── -->
+  <div id="section-users" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex gap-2">
+        <select class="form-select form-select-sm w-auto" id="userRoleFilter" onchange="loadUsers()">
+          <option value="">All Roles</option>
+          <option value="student">Students</option>
+          <option value="employer">Employers</option>
+          <option value="admin">Admins</option>
+        </select>
+      </div>
+      <span class="text-muted small" id="userCount"></span>
+    </div>
+    <div class="stat-card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="usersPagination" class="d-flex justify-content-center mt-3"></div>
+    </div>
+  </div>
+
+  <!-- ── Jobs Section ──────────────────────────────────────────────────── -->
+  <div id="section-jobs" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <select class="form-select form-select-sm w-auto" id="jobStatusFilter" onchange="loadAdminJobs()">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="closed">Closed</option>
+        <option value="pending">Pending</option>
+      </select>
+      <span class="text-muted small" id="jobCount"></span>
+    </div>
+    <div class="stat-card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>ID</th><th>Title</th><th>Company</th><th>Type</th><th>Status</th><th>Views</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="jobsTable">
+            <tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="jobsPagination" class="d-flex justify-content-center mt-3"></div>
+    </div>
+  </div>
+
+  <!-- ── Analytics Section ─────────────────────────────────────────────── -->
+  <div id="section-analytics" class="d-none">
+    <div class="row g-3 mb-4">
+      <div class="col-lg-6">
+        <div class="stat-card">
+          <h6 class="fw-bold mb-3">Job Views (Last 30 Days)</h6>
+          <canvas id="viewsChart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="stat-card">
+          <h6 class="fw-bold mb-3">Applications (Last 30 Days)</h6>
+          <canvas id="appsChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <h6 class="fw-bold mb-3">Most Applied Jobs</h6>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>#</th><th>Job Title</th><th>Company</th><th>Applications</th></tr>
+          </thead>
+          <tbody id="mostAppliedTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  // Require admin
+  const user = api.getUser();
+  if (!user || user.role !== 'admin') window.location.href = '/login.html';
+
+  document.getElementById('adminName').textContent = user.name;
+  document.getElementById('adminAvatar').textContent = user.name.charAt(0).toUpperCase();
+
+  let usersPage = 1, jobsPage = 1;
+  let categoryChart, typeChart, viewsChart, appsChart;
+
+  function showSection(name, link) {
+    document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
+    document.getElementById(`section-${name}`).classList.remove('d-none');
+    document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+    if (link) link.classList.add('active');
+    document.getElementById('sectionTitle').textContent =
+      { dashboard: 'Dashboard', users: 'Users', jobs: 'Jobs', analytics: 'Analytics' }[name];
+
+    if (name === 'users') loadUsers();
+    if (name === 'jobs') loadAdminJobs();
+    if (name === 'analytics') loadAnalytics();
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const data = await api.getAdminStats();
+      const { stats, jobsByCategory, jobsByType, topJobs } = data;
+
+      document.getElementById('statCards').innerHTML = `
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Total Users</div>
+                <div class="value">${stats.totalUsers}</div>
+              </div>
+              <div class="icon bg-primary bg-opacity-10 text-primary">👥</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Active Jobs</div>
+                <div class="value">${stats.activeJobs}</div>
+              </div>
+              <div class="icon bg-success bg-opacity-10 text-success">💼</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Applications</div>
+                <div class="value">${stats.totalApplications}</div>
+              </div>
+              <div class="icon bg-warning bg-opacity-10 text-warning">📋</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Total Views</div>
+                <div class="value">${stats.totalViews || 0}</div>
+              </div>
+              <div class="icon bg-info bg-opacity-10 text-info">👁️</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Category chart
+      if (categoryChart) categoryChart.destroy();
+      categoryChart = new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+          labels: jobsByCategory.map(r => r.category || 'Other'),
+          datasets: [{ data: jobsByCategory.map(r => r.count), backgroundColor: ['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d'] }]
+        },
+        options: { plugins: { legend: { position: 'right' } }, responsive: true }
+      });
+
+      // Type chart
+      if (typeChart) typeChart.destroy();
+      typeChart = new Chart(document.getElementById('typeChart'), {
+        type: 'bar',
+        data: {
+          labels: jobsByType.map(r => r.job_type),
+          datasets: [{ label: 'Jobs', data: jobsByType.map(r => r.count), backgroundColor: '#2563eb', borderRadius: 6 }]
+        },
+        options: { plugins: { legend: { display: false } }, responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+
+      // Top jobs table
+      document.getElementById('topJobsTable').innerHTML = topJobs.map((j, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td class="fw-semibold">${j.title}</td>
+          <td class="text-muted">${j.company_name}</td>
+          <td><span class="badge bg-primary">${j.views}</span></td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      showToast('Failed to load dashboard stats', 'danger');
+    }
+  }
+
+  // ── Users ────────────────────────────────────────────────────────────────
+  async function loadUsers() {
+    const role = document.getElementById('userRoleFilter').value;
+    try {
+      const data = await api.getAdminUsers({ role, page: usersPage, limit: 15 });
+      document.getElementById('userCount').textContent = `${data.pagination.total} users`;
+      document.getElementById('usersTable').innerHTML = data.users.map(u => `
+        <tr>
+          <td class="text-muted small">${u.id}</td>
+          <td class="fw-semibold">${u.name}</td>
+          <td class="text-muted small">${u.email}</td>
+          <td><span class="badge bg-${u.role === 'admin' ? 'danger' : u.role === 'employer' ? 'warning text-dark' : 'primary'}">${u.role}</span></td>
+          <td class="text-muted small">${new Date(u.created_at).toLocaleDateString()}</td>
+          <td>
+            ${u.id !== user.id ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id}, this)"><i class="bi bi-trash"></i></button>` : '<span class="text-muted small">You</span>'}
+          </td>
+        </tr>
+      `).join('');
+      renderAdminPagination('usersPagination', data.pagination, p => { usersPage = p; loadUsers(); });
+    } catch (err) {
+      showToast('Failed to load users', 'danger');
+    }
+  }
+
+  async function deleteUser(id, btn) {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    try {
+      await api.deleteUser(id);
+      btn.closest('tr').remove();
+      showToast('User deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  // ── Jobs ─────────────────────────────────────────────────────────────────
+  async function loadAdminJobs() {
+    const status = document.getElementById('jobStatusFilter').value;
+    try {
+      const data = await api.getAdminJobs({ status, page: jobsPage, limit: 15 });
+      document.getElementById('jobCount').textContent = `${data.pagination.total} jobs`;
+      document.getElementById('jobsTable').innerHTML = data.jobs.map(j => `
+        <tr>
+          <td class="text-muted small">${j.id}</td>
+          <td class="fw-semibold">${j.title}</td>
+          <td class="text-muted small">${j.company_name}</td>
+          <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
+          <td>
+            <select class="form-select form-select-sm w-auto" onchange="updateJobStatus(${j.id}, this.value)" style="min-width:90px">
+              <option value="active" ${j.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="closed" ${j.status === 'closed' ? 'selected' : ''}>Closed</option>
+              <option value="pending" ${j.status === 'pending' ? 'selected' : ''}>Pending</option>
+            </select>
+          </td>
+          <td>${j.views}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteJobAdmin(${j.id}, this)"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+      renderAdminPagination('jobsPagination', data.pagination, p => { jobsPage = p; loadAdminJobs(); });
+    } catch (err) {
+      showToast('Failed to load jobs', 'danger');
+    }
+  }
+
+  async function updateJobStatus(id, status) {
+    try {
+      await api.updateJobStatus(id, status);
+      showToast(`Job status updated to ${status}`, 'success');
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  async function deleteJobAdmin(id, btn) {
+    if (!confirm('Delete this job? This cannot be undone.')) return;
+    try {
+      await api.deleteJob(id);
+      btn.closest('tr').remove();
+      showToast('Job deleted', 'success');
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  // ── Analytics ────────────────────────────────────────────────────────────
+  async function loadAnalytics() {
+    try {
+      const data = await api.getAnalytics();
+
+      if (viewsChart) viewsChart.destroy();
+      viewsChart = new Chart(document.getElementById('viewsChart'), {
+        type: 'line',
+        data: {
+          labels: data.viewsPerDay.map(r => r.date),
+          datasets: [{ label: 'Views', data: data.viewsPerDay.map(r => r.views), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.4 }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+
+      if (appsChart) appsChart.destroy();
+      appsChart = new Chart(document.getElementById('appsChart'), {
+        type: 'line',
+        data: {
+          labels: data.appsPerDay.map(r => r.date),
+          datasets: [{ label: 'Applications', data: data.appsPerDay.map(r => r.applications), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', fill: true, tension: 0.4 }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+
+      document.getElementById('mostAppliedTable').innerHTML = data.mostApplied.map((j, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td class="fw-semibold">${j.title}</td>
+          <td class="text-muted">${j.company_name}</td>
+          <td><span class="badge bg-success">${j.application_count}</span></td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      showToast('Failed to load analytics', 'danger');
+    }
+  }
+
+  // ── Pagination helper ────────────────────────────────────────────────────
+  function renderAdminPagination(containerId, { page, total, limit }, onPage) {
+    const pages = Math.ceil(total / limit);
+    if (pages <= 1) { document.getElementById(containerId).innerHTML = ''; return; }
+    let html = '<nav><ul class="pagination pagination-sm">';
+    html += `<li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="(${onPage.toString()})(${page-1});return false;">‹</a></li>`;
+    for (let i = 1; i <= pages; i++) {
+      html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="(${onPage.toString()})(${i});return false;">${i}</a></li>`;
+    }
+    html += `<li class="page-item ${page === pages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="(${onPage.toString()})(${page+1});return false;">›</a></li>`;
+    html += '</ul></nav>';
+    document.getElementById(containerId).innerHTML = html;
+  }
+
+  // Init
+  loadDashboard();
+</script>
+</body>
+</html>
