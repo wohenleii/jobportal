@@ -78,6 +78,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/jobs/my — employer's own jobs with application counts
+router.get('/my', authenticate, requireEmployer, async (req, res) => {
+  try {
+    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ?', [req.user.id]);
+    if (empRows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Employer profile not found.' });
+    }
+    const [jobs] = await db.query(
+      `SELECT j.*, e.company_name,
+        (SELECT COUNT(*) FROM applications a WHERE a.job_id = j.id) as application_count
+       FROM jobs j
+       JOIN employers e ON j.employer_id = e.id
+       WHERE j.employer_id = ?
+       ORDER BY j.created_at DESC`,
+      [empRows[0].id]
+    );
+    res.json({ success: true, jobs });
+  } catch (err) {
+    console.error('Get my jobs error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
 // GET /api/jobs/categories — get distinct categories
 router.get('/categories', async (req, res) => {
   try {
@@ -134,26 +157,25 @@ router.post('/', authenticate, requireEmployer, async (req, res) => {
   }
 
   try {
-    // Get employer id for this user
     const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ?', [req.user.id]);
     if (empRows.length === 0) {
       return res.status(400).json({ success: false, message: 'Employer profile not found.' });
     }
 
     const [result] = await db.query(
-      `INSERT INTO jobs (employer_id, title, description, requirements, location, job_type, category, salary_min, salary_max, deadline)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO jobs (employer_id, title, description, requirements, location, job_type, category, salary_min, salary_max, deadline, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [empRows[0].id, title, description, requirements, location, job_type, category, salary_min || null, salary_max || null, deadline || null]
     );
 
-    res.status(201).json({ success: true, message: 'Job posted successfully.', jobId: result.insertId });
+    res.status(201).json({ success: true, message: 'Job submitted for review.', jobId: result.insertId });
   } catch (err) {
     console.error('Create job error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
 
-// PUT /api/jobs/:id — update job
+// PUT /api/jobs/:id — update job (employer owns it)
 router.put('/:id', authenticate, requireEmployer, async (req, res) => {
   const { id } = req.params;
   const { title, description, requirements, location, job_type, category, salary_min, salary_max, deadline, status } = req.body;

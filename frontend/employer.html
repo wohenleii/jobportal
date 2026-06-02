@@ -1,0 +1,560 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employer Dashboard — JobPortal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">Job<span>Portal</span> <small class="opacity-50 fs-6">Employer</small></div>
+  <ul class="nav flex-column mt-2">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showSection('dashboard', this)"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('jobs', this)"><i class="bi bi-briefcase"></i> My Jobs</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('applicants', this)"><i class="bi bi-people"></i> Applicants</a></li>
+    <li class="nav-item mt-4"><a class="nav-link" href="/index.html"><i class="bi bi-house"></i> View Site</a></li>
+    <li class="nav-item"><a class="nav-link text-danger" href="#" onclick="api.logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+  </ul>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Top Bar -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <i class="bi bi-list"></i>
+      </button>
+      <h4 class="fw-bold d-inline" id="sectionTitle">Dashboard</h4>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small" id="employerName"></span>
+      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:700" id="employerAvatar">E</div>
+    </div>
+  </div>
+
+  <!-- ── Dashboard Section ──────────────────────────────────────────────── -->
+  <div id="section-dashboard">
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4" id="statCards">
+      <div class="col-12 text-center py-4"><div class="spinner-border text-primary"></div></div>
+    </div>
+
+    <!-- Recent Applicants Table -->
+    <div class="stat-card">
+      <h6 class="fw-bold mb-3">Recent Applicants</h6>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>Applicant</th><th>Email</th><th>Job Title</th><th>Applied</th><th>Status</th></tr>
+          </thead>
+          <tbody id="recentApplicantsTable">
+            <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── My Jobs Section ────────────────────────────────────────────────── -->
+  <div id="section-jobs" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="text-muted small" id="jobCount"></span>
+      <button class="btn btn-primary" onclick="openPostJobModal()">
+        <i class="bi bi-plus-circle me-1"></i> Post New Job
+      </button>
+    </div>
+    <div class="stat-card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>Title</th><th>Type</th><th>Status</th><th>Applicants</th><th>Deadline</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="jobsTable">
+            <tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Applicants Section ─────────────────────────────────────────────── -->
+  <div id="section-applicants" class="d-none">
+    <div class="stat-card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr><th>Applicant Name</th><th>Email</th><th>Job Title</th><th>Applied Date</th><th>Status</th></tr>
+          </thead>
+          <tbody id="applicantsTable">
+            <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- ── Post New Job Modal ────────────────────────────────────────────────── -->
+<div class="modal fade" id="postJobModal" tabindex="-1" aria-labelledby="postJobModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="postJobModalLabel"><i class="bi bi-plus-circle me-2 text-primary"></i>Post New Job</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="postJobForm" novalidate>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Job Title <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="pj_title" placeholder="e.g. Frontend Developer" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="pj_description" rows="4" placeholder="Describe the role, responsibilities, and what makes it great..." required></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Requirements</label>
+              <textarea class="form-control" id="pj_requirements" rows="3" placeholder="List required skills, experience, qualifications..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Location <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="pj_location" placeholder="e.g. Kuala Lumpur, Malaysia" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Job Type <span class="text-danger">*</span></label>
+              <select class="form-select" id="pj_job_type" required>
+                <option value="" disabled selected>Select type...</option>
+                <option value="full-time">Full-Time</option>
+                <option value="part-time">Part-Time</option>
+                <option value="internship">Internship</option>
+                <option value="contract">Contract</option>
+                <option value="remote">Remote</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Category</label>
+              <input type="text" class="form-control" id="pj_category" placeholder="e.g. Technology, Finance..." />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Salary Min</label>
+              <input type="number" class="form-control" id="pj_salary_min" placeholder="e.g. 3000" min="0" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Salary Max</label>
+              <input type="number" class="form-control" id="pj_salary_max" placeholder="e.g. 6000" min="0" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Application Deadline</label>
+              <input type="date" class="form-control" id="pj_deadline" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="submitPostJob()">
+          <i class="bi bi-send me-1"></i> Post Job
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit Job Modal ────────────────────────────────────────────────────── -->
+<div class="modal fade" id="editJobModal" tabindex="-1" aria-labelledby="editJobModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editJobModalLabel"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Job</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editJobForm" novalidate>
+          <input type="hidden" id="ej_id" />
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Job Title <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="ej_title" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="ej_description" rows="4" required></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Requirements</label>
+              <textarea class="form-control" id="ej_requirements" rows="3"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Location <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="ej_location" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Job Type <span class="text-danger">*</span></label>
+              <select class="form-select" id="ej_job_type" required>
+                <option value="full-time">Full-Time</option>
+                <option value="part-time">Part-Time</option>
+                <option value="internship">Internship</option>
+                <option value="contract">Contract</option>
+                <option value="remote">Remote</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Category</label>
+              <input type="text" class="form-control" id="ej_category" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Salary Min</label>
+              <input type="number" class="form-control" id="ej_salary_min" min="0" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Salary Max</label>
+              <input type="number" class="form-control" id="ej_salary_max" min="0" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Application Deadline</label>
+              <input type="date" class="form-control" id="ej_deadline" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning text-white" onclick="submitEditJob()">
+          <i class="bi bi-save me-1"></i> Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  // ── Auth guard ───────────────────────────────────────────────────────────
+  const user = api.getUser();
+  if (!user || user.role !== 'employer') window.location.href = '/login.html';
+
+  document.getElementById('employerName').textContent = user.name;
+  document.getElementById('employerAvatar').textContent = user.name.charAt(0).toUpperCase();
+
+  // Modal instances
+  const postJobModal = new bootstrap.Modal(document.getElementById('postJobModal'));
+  const editJobModal = new bootstrap.Modal(document.getElementById('editJobModal'));
+
+  // ── Section switching ────────────────────────────────────────────────────
+  function showSection(name, link) {
+    document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
+    document.getElementById('section-' + name).classList.remove('d-none');
+    document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+    if (link) link.classList.add('active');
+    const titles = { dashboard: 'Dashboard', jobs: 'My Jobs', applicants: 'Applicants' };
+    document.getElementById('sectionTitle').textContent = titles[name] || name;
+
+    if (name === 'jobs') loadJobs();
+    if (name === 'applicants') loadApplicants();
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const [statsData, appsData] = await Promise.all([
+        api.getEmployerStats(),
+        api.getEmployerApplications()
+      ]);
+
+      const { totalJobs, activeJobs, totalApplications, shortlisted } = statsData.stats;
+
+      document.getElementById('statCards').innerHTML = `
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Total Jobs</div>
+                <div class="value">${totalJobs}</div>
+              </div>
+              <div class="icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-briefcase-fill"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Active Jobs</div>
+                <div class="value">${activeJobs}</div>
+              </div>
+              <div class="icon bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Total Applicants</div>
+                <div class="value">${totalApplications}</div>
+              </div>
+              <div class="icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-people-fill"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="title">Shortlisted</div>
+                <div class="value">${shortlisted}</div>
+              </div>
+              <div class="icon bg-info bg-opacity-10 text-info"><i class="bi bi-star-fill"></i></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Recent applicants — show latest 10
+      const recent = (appsData.applications || []).slice(0, 10);
+      document.getElementById('recentApplicantsTable').innerHTML = recent.length
+        ? recent.map(a => `
+          <tr>
+            <td class="fw-semibold">${escHtml(a.applicant_name)}</td>
+            <td class="text-muted small">${escHtml(a.applicant_email)}</td>
+            <td>${escHtml(a.job_title)}</td>
+            <td class="text-muted small">${formatDate(a.applied_at)}</td>
+            <td>${statusBadge(a.status)}</td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" class="text-center text-muted py-3">No applicants yet.</td></tr>';
+
+    } catch (err) {
+      showToast('Failed to load dashboard: ' + err.message, 'danger');
+      document.getElementById('statCards').innerHTML = '<div class="col-12 text-center text-danger">Failed to load stats.</div>';
+    }
+  }
+
+  // ── My Jobs ──────────────────────────────────────────────────────────────
+  async function loadJobs() {
+    document.getElementById('jobsTable').innerHTML =
+      '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    try {
+      const data = await api.getEmployerJobs();
+      const jobs = data.jobs || [];
+      document.getElementById('jobCount').textContent = jobs.length + ' job(s)';
+      document.getElementById('jobsTable').innerHTML = jobs.length
+        ? jobs.map(j => `
+          <tr>
+            <td class="fw-semibold">${escHtml(j.title)}</td>
+            <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
+            <td>
+              <span class="badge ${j.status === 'active' ? 'bg-success' : j.status === 'closed' ? 'bg-secondary' : 'bg-warning text-dark'}">
+                ${j.status}
+              </span>
+            </td>
+            <td><span class="badge bg-primary rounded-pill">${j.application_count || 0}</span></td>
+            <td class="text-muted small">${j.deadline ? new Date(j.deadline).toLocaleDateString() : '—'}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="btn btn-sm btn-outline-primary" onclick="openEditJobModal(${j.id})" title="Edit">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm ${j.status === 'active' ? 'btn-outline-secondary' : 'btn-outline-success'}"
+                  onclick="toggleJobStatus(${j.id}, '${j.status}')" title="${j.status === 'active' ? 'Close' : 'Reopen'}">
+                  <i class="bi ${j.status === 'active' ? 'bi-x-circle' : 'bi-arrow-repeat'}"></i>
+                  ${j.status === 'active' ? 'Close' : 'Reopen'}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="6" class="text-center text-muted py-3">No jobs posted yet. Click "Post New Job" to get started.</td></tr>';
+    } catch (err) {
+      showToast('Failed to load jobs: ' + err.message, 'danger');
+      document.getElementById('jobsTable').innerHTML =
+        '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load jobs.</td></tr>';
+    }
+  }
+
+  async function toggleJobStatus(jobId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'closed' : 'active';
+    if (!confirm(`${newStatus === 'closed' ? 'Close' : 'Reopen'} this job?`)) return;
+    try {
+      await api.updateJob(jobId, { status: newStatus });
+      showToast(`Job ${newStatus === 'active' ? 're-opened' : 'closed'} successfully.`, 'success');
+      loadJobs();
+    } catch (err) {
+      showToast('Failed to update job: ' + err.message, 'danger');
+    }
+  }
+
+  // ── Applicants ───────────────────────────────────────────────────────────
+  async function loadApplicants() {
+    document.getElementById('applicantsTable').innerHTML =
+      '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    try {
+      const data = await api.getEmployerApplications();
+      const apps = data.applications || [];
+      document.getElementById('applicantsTable').innerHTML = apps.length
+        ? apps.map(a => `
+          <tr>
+            <td class="fw-semibold">${escHtml(a.applicant_name)}</td>
+            <td class="text-muted small">${escHtml(a.applicant_email)}</td>
+            <td>${escHtml(a.job_title)}</td>
+            <td class="text-muted small">${formatDate(a.applied_at)}</td>
+            <td>
+              <select class="form-select form-select-sm" style="min-width:130px"
+                onchange="updateAppStatus(${a.id}, this.value, this)">
+                <option value="pending"    ${a.status === 'pending'    ? 'selected' : ''}>Pending</option>
+                <option value="reviewed"   ${a.status === 'reviewed'   ? 'selected' : ''}>Reviewed</option>
+                <option value="shortlisted"${a.status === 'shortlisted'? 'selected' : ''}>Shortlisted</option>
+                <option value="rejected"   ${a.status === 'rejected'   ? 'selected' : ''}>Rejected</option>
+                <option value="hired"      ${a.status === 'hired'      ? 'selected' : ''}>Hired</option>
+              </select>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" class="text-center text-muted py-3">No applicants yet.</td></tr>';
+    } catch (err) {
+      showToast('Failed to load applicants: ' + err.message, 'danger');
+      document.getElementById('applicantsTable').innerHTML =
+        '<tr><td colspan="5" class="text-center text-danger py-3">Failed to load applicants.</td></tr>';
+    }
+  }
+
+  async function updateAppStatus(appId, status, selectEl) {
+    try {
+      await api.updateApplicationStatus(appId, status);
+      showToast('Status updated to ' + status, 'success');
+    } catch (err) {
+      showToast('Failed to update status: ' + err.message, 'danger');
+      // revert
+      selectEl.value = selectEl.dataset.prev || selectEl.value;
+    }
+  }
+
+  // ── Post Job Modal ────────────────────────────────────────────────────────
+  function openPostJobModal() {
+    document.getElementById('postJobForm').reset();
+    postJobModal.show();
+  }
+
+  async function submitPostJob() {
+    const form = document.getElementById('postJobForm');
+    if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+
+    const payload = {
+      title:       document.getElementById('pj_title').value.trim(),
+      description: document.getElementById('pj_description').value.trim(),
+      requirements:document.getElementById('pj_requirements').value.trim(),
+      location:    document.getElementById('pj_location').value.trim(),
+      job_type:    document.getElementById('pj_job_type').value,
+      category:    document.getElementById('pj_category').value.trim(),
+      salary_min:  document.getElementById('pj_salary_min').value || null,
+      salary_max:  document.getElementById('pj_salary_max').value || null,
+      deadline:    document.getElementById('pj_deadline').value || null,
+    };
+
+    try {
+      await api.createJob(payload);
+      showToast('Job posted successfully!', 'success');
+      postJobModal.hide();
+      form.reset();
+      form.classList.remove('was-validated');
+      // If on jobs section, reload
+      if (!document.getElementById('section-jobs').classList.contains('d-none')) loadJobs();
+    } catch (err) {
+      showToast('Failed to post job: ' + err.message, 'danger');
+    }
+  }
+
+  // ── Edit Job Modal ────────────────────────────────────────────────────────
+  let _editJobCache = {};
+
+  async function openEditJobModal(jobId) {
+    try {
+      // Try to get from cache first (jobs already loaded)
+      const data = await api.getEmployerJobs();
+      const job = (data.jobs || []).find(j => j.id === jobId);
+      if (!job) { showToast('Job not found.', 'danger'); return; }
+
+      document.getElementById('ej_id').value          = job.id;
+      document.getElementById('ej_title').value        = job.title || '';
+      document.getElementById('ej_description').value  = job.description || '';
+      document.getElementById('ej_requirements').value = job.requirements || '';
+      document.getElementById('ej_location').value     = job.location || '';
+      document.getElementById('ej_job_type').value     = job.job_type || 'full-time';
+      document.getElementById('ej_category').value     = job.category || '';
+      document.getElementById('ej_salary_min').value   = job.salary_min || '';
+      document.getElementById('ej_salary_max').value   = job.salary_max || '';
+      document.getElementById('ej_deadline').value     = job.deadline ? job.deadline.split('T')[0] : '';
+
+      editJobModal.show();
+    } catch (err) {
+      showToast('Failed to load job details: ' + err.message, 'danger');
+    }
+  }
+
+  async function submitEditJob() {
+    const form = document.getElementById('editJobForm');
+    if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+
+    const jobId = document.getElementById('ej_id').value;
+    const payload = {
+      title:        document.getElementById('ej_title').value.trim(),
+      description:  document.getElementById('ej_description').value.trim(),
+      requirements: document.getElementById('ej_requirements').value.trim(),
+      location:     document.getElementById('ej_location').value.trim(),
+      job_type:     document.getElementById('ej_job_type').value,
+      category:     document.getElementById('ej_category').value.trim(),
+      salary_min:   document.getElementById('ej_salary_min').value || null,
+      salary_max:   document.getElementById('ej_salary_max').value || null,
+      deadline:     document.getElementById('ej_deadline').value || null,
+    };
+
+    try {
+      await api.updateJob(jobId, payload);
+      showToast('Job updated successfully!', 'success');
+      editJobModal.hide();
+      form.classList.remove('was-validated');
+      loadJobs();
+    } catch (err) {
+      showToast('Failed to update job: ' + err.message, 'danger');
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function statusBadge(status) {
+    const map = {
+      pending:     'bg-warning text-dark',
+      reviewed:    'bg-info text-white',
+      shortlisted: 'bg-primary',
+      rejected:    'bg-danger',
+      hired:       'bg-success',
+    };
+    return `<span class="badge ${map[status] || 'bg-secondary'}">${status || 'pending'}</span>`;
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  loadDashboard();
+</script>
+</body>
+</html>

@@ -90,4 +90,62 @@ router.put('/:id/status', authenticate, requireEmployer, async (req, res) => {
   }
 });
 
+// GET /api/applications/employer — get all applications for employer's jobs
+router.get('/employer', authenticate, requireEmployer, async (req, res) => {
+  try {
+    // Get employer id
+    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ?', [req.user.id]);
+    if (empRows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Employer profile not found.' });
+    }
+    const employerId = empRows[0].id;
+
+    const [rows] = await db.query(
+      `SELECT a.*, u.name as applicant_name, u.email as applicant_email, u.skills, u.resume_url,
+              j.title as job_title, j.job_type
+       FROM applications a
+       JOIN users u ON a.user_id = u.id
+       JOIN jobs j ON a.job_id = j.id
+       WHERE j.employer_id = ?
+       ORDER BY a.applied_at DESC`,
+      [employerId]
+    );
+    res.json({ success: true, applications: rows });
+  } catch (err) {
+    console.error('Get employer applications error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// GET /api/applications/employer/stats — stats for employer dashboard
+router.get('/employer/stats', authenticate, requireEmployer, async (req, res) => {
+  try {
+    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ?', [req.user.id]);
+    if (empRows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Employer profile not found.' });
+    }
+    const employerId = empRows[0].id;
+
+    const [[{ totalJobs }]] = await db.query(
+      'SELECT COUNT(*) as totalJobs FROM jobs WHERE employer_id = ?', [employerId]
+    );
+    const [[{ activeJobs }]] = await db.query(
+      'SELECT COUNT(*) as activeJobs FROM jobs WHERE employer_id = ? AND status = "active"', [employerId]
+    );
+    const [[{ totalApplications }]] = await db.query(
+      `SELECT COUNT(*) as totalApplications FROM applications a
+       JOIN jobs j ON a.job_id = j.id WHERE j.employer_id = ?`, [employerId]
+    );
+    const [[{ shortlisted }]] = await db.query(
+      `SELECT COUNT(*) as shortlisted FROM applications a
+       JOIN jobs j ON a.job_id = j.id WHERE j.employer_id = ? AND a.status = 'shortlisted'`, [employerId]
+    );
+
+    res.json({ success: true, stats: { totalJobs, activeJobs, totalApplications, shortlisted } });
+  } catch (err) {
+    console.error('Employer stats error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
 module.exports = router;

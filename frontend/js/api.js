@@ -141,6 +141,27 @@ const api = {
     return this.get('/applications/my');
   },
 
+  // ── Employer ──────────────────────────────────────────────────────────
+  async getEmployerJobs() {
+    return this.get('/jobs/my');
+  },
+
+  async getEmployerStats() {
+    return this.get('/applications/employer/stats');
+  },
+
+  async getEmployerApplications() {
+    return this.get('/applications/employer');
+  },
+
+  async getJobApplications(jobId) {
+    return this.get(`/applications/job/${jobId}`);
+  },
+
+  async updateApplicationStatus(appId, status) {
+    return this.put(`/applications/${appId}/status`, { status });
+  },
+
   // ── Admin ─────────────────────────────────────────────────────────────
   async getAdminStats() {
     return this.get('/admin/stats');
