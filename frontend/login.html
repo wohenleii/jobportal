@@ -59,7 +59,12 @@
 <script src="/js/api.js"></script>
 <script>
   // Redirect if already logged in
-  if (api.isLoggedIn()) window.location.href = '/index.html';
+  if (api.isLoggedIn()) {
+    const u = api.getUser();
+    if (u && u.role === 'admin') window.location.href = '/admin.html';
+    else if (u && u.role === 'employer') window.location.href = '/employer.html';
+    else window.location.href = '/index.html';
+  }
 
   document.getElementById('togglePwd').addEventListener('click', () => {
     const pwd = document.getElementById('password');
@@ -104,6 +109,7 @@
       showAlert('Login successful! Redirecting...', 'success');
       setTimeout(() => {
         if (data.user.role === 'admin') window.location.href = '/admin.html';
+        else if (data.user.role === 'employer') window.location.href = '/employer.html';
         else window.location.href = '/index.html';
       }, 800);
     } catch (err) {
