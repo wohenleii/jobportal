@@ -8,190 +8,547 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Admin-specific overrides ── */
+    .sidebar {
+      width: 250px;
+      background: #0f172a;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #fff;
+    }
+    .sidebar-brand span { color: #f59e0b; }
+    .sidebar-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      background: rgba(239,68,68,0.18);
+      color: #f87171;
+      border-radius: 4px;
+      padding: 2px 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .sidebar .nav-section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 16px 20px 6px;
+    }
+    .sidebar .nav-link {
+      color: #94a3b8;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin: 1px 10px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.18s;
+    }
+    .sidebar .nav-link i { font-size: 1rem; width: 18px; flex-shrink: 0; }
+    .sidebar .nav-link:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+    .sidebar .nav-link.active {
+      background: rgba(37,99,235,0.22);
+      color: #93c5fd;
+      font-weight: 600;
+    }
+    .sidebar .nav-link.active i { color: #60a5fa; }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px 10px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .main-content { margin-left: 250px; padding: 28px 32px; min-height: 100vh; background: #f1f5f9; }
+    /* ── Top Bar ── */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .topbar-title { font-size: 1.45rem; font-weight: 800; color: #0f172a; letter-spacing: -0.4px; }
+    .topbar-subtitle { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
+    .admin-avatar-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    /* ── Stat Cards ── */
+    .kpi-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 14px 14px 0 0;
+    }
+    .kpi-card.blue::before  { background: linear-gradient(90deg,#2563eb,#60a5fa); }
+    .kpi-card.green::before { background: linear-gradient(90deg,#16a34a,#4ade80); }
+    .kpi-card.amber::before { background: linear-gradient(90deg,#d97706,#fbbf24); }
+    .kpi-card.purple::before{ background: linear-gradient(90deg,#7c3aed,#a78bfa); }
+    .kpi-label { font-size: 0.78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .kpi-value { font-size: 2.1rem; font-weight: 800; color: #0f172a; line-height: 1; }
+    .kpi-icon {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+    .kpi-icon.blue   { background: #dbeafe; color: #2563eb; }
+    .kpi-icon.green  { background: #dcfce7; color: #16a34a; }
+    .kpi-icon.amber  { background: #fef3c7; color: #d97706; }
+    .kpi-icon.purple { background: #ede9fe; color: #7c3aed; }
+    /* ── Content Cards ── */
+    .content-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    .content-card-header {
+      padding: 18px 22px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .content-card-title { font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+    .content-card-body  { padding: 20px 22px; }
+    /* ── Tables ── */
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .admin-table thead tr { background: #f8fafc; }
+    .admin-table thead th {
+      padding: 11px 16px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .admin-table tbody td {
+      padding: 13px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      vertical-align: middle;
+    }
+    .admin-table tbody tr:last-child td { border-bottom: none; }
+    .admin-table tbody tr:hover td { background: #f8fafc; }
+    /* ── Filter Bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 14px 22px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fafbfc;
+    }
+    .filter-bar .form-select, .filter-bar .form-control {
+      font-size: 0.82rem;
+      border-radius: 8px;
+      border-color: #e2e8f0;
+      padding: 6px 12px;
+      height: auto;
+    }
+    .filter-bar .form-select { min-width: 130px; }
+    /* ── Role badges ── */
+    .role-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .role-admin    { background: #fee2e2; color: #b91c1c; }
+    .role-employer { background: #fef3c7; color: #92400e; }
+    .role-student  { background: #dbeafe; color: #1d4ed8; }
+    /* ── Status badge ── */
+    .status-dot {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.78rem; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .status-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-active  { background: #dcfce7; color: #15803d; }
+    .status-active::before  { background: #16a34a; }
+    .status-closed  { background: #f1f5f9; color: #64748b; }
+    .status-closed::before  { background: #94a3b8; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-pending::before { background: #d97706; }
+    /* ── Action Buttons ── */
+    .btn-icon {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-icon:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+    .btn-icon.danger:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+    /* ── Empty/Loading State ── */
+    .empty-state { padding: 48px 20px; text-align: center; color: #94a3b8; }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; opacity: 0.5; }
+    /* ── Mobile ── */
+    @media (max-width: 992px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; padding: 20px 16px; }
+    }
+  </style>
 </head>
 <body>
 
-<!-- Sidebar -->
+<!-- ══ SIDEBAR ════════════════════════════════════════════════════════════ -->
 <nav class="sidebar" id="sidebar">
-  <div class="sidebar-brand">Job<span>Portal</span> <small class="opacity-50 fs-6">Admin</small></div>
-  <ul class="nav flex-column mt-2">
-    <li class="nav-item"><a class="nav-link active" href="#" onclick="showSection('dashboard', this)"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('users', this)"><i class="bi bi-people"></i> Users</a></li>
-    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('jobs', this)"><i class="bi bi-briefcase"></i> Jobs</a></li>
-    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('analytics', this)"><i class="bi bi-bar-chart"></i> Analytics</a></li>
-    <li class="nav-item mt-4"><a class="nav-link" href="/index.html"><i class="bi bi-house"></i> View Site</a></li>
-    <li class="nav-item"><a class="nav-link text-danger" href="#" onclick="api.logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+  <div class="sidebar-brand">
+    Job<span>Portal</span>
+    <span class="sidebar-badge ms-2">Admin</span>
+  </div>
+
+  <ul class="nav flex-column mt-1 px-1">
+    <li class="nav-section-label">Overview</li>
+    <li class="nav-item">
+      <a class="nav-link active" href="#" onclick="showSection('dashboard',this)">
+        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="showSection('analytics',this)">
+        <i class="bi bi-bar-chart-line-fill"></i> Analytics
+      </a>
+    </li>
+
+    <li class="nav-section-label">Management</li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="showSection('users',this)">
+        <i class="bi bi-people-fill"></i> Users
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#" onclick="showSection('jobs',this)">
+        <i class="bi bi-briefcase-fill"></i> Jobs
+      </a>
+    </li>
+
+    <li class="nav-section-label">Site</li>
+    <li class="nav-item">
+      <a class="nav-link" href="/index.html">
+        <i class="bi bi-house-fill"></i> View Site
+      </a>
+    </li>
   </ul>
+
+  <div class="sidebar-footer">
+    <div class="d-flex align-items-center gap-2 px-2 mb-2">
+      <div class="admin-avatar-btn" id="sidebarAvatar">A</div>
+      <div>
+        <div class="text-white fw-semibold" style="font-size:0.82rem" id="sidebarName">Admin</div>
+        <div class="text-muted" style="font-size:0.72rem">Administrator</div>
+      </div>
+    </div>
+    <a class="nav-link text-danger" href="#" onclick="api.logout()" style="margin:0 2px;">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </div>
 </nav>
 
-<!-- Main Content -->
+<!-- ══ MAIN CONTENT ═══════════════════════════════════════════════════════ -->
 <div class="main-content">
 
   <!-- Top Bar -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="topbar">
     <div>
-      <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <button class="btn btn-sm btn-outline-secondary d-lg-none me-2"
+        onclick="document.getElementById('sidebar').classList.toggle('open')">
         <i class="bi bi-list"></i>
       </button>
-      <h4 class="fw-bold d-inline" id="sectionTitle">Dashboard</h4>
+      <div class="topbar-title" id="sectionTitle">Dashboard</div>
+      <div class="topbar-subtitle" id="sectionSubtitle">Welcome back, here's what's happening today.</div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="text-muted small" id="adminName"></span>
-      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:700" id="adminAvatar">A</div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="text-muted small d-none d-md-block" id="adminNameTop"></span>
+      <div class="admin-avatar-btn" id="adminAvatarTop">A</div>
     </div>
   </div>
 
-  <!-- ── Dashboard Section ─────────────────────────────────────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════
+       DASHBOARD SECTION
+       ════════════════════════════════════════════════════════════════════ -->
   <div id="section-dashboard">
-    <!-- Stat Cards -->
+
+    <!-- KPI Cards -->
     <div class="row g-3 mb-4" id="statCards">
-      <div class="col-12 text-center py-4"><div class="spinner-border text-primary"></div></div>
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
     </div>
 
     <!-- Charts Row -->
-    <div class="row g-3 mb-4">
-      <div class="col-lg-6">
-        <div class="stat-card">
-          <h6 class="fw-bold mb-3">Jobs by Category</h6>
-          <canvas id="categoryChart" height="220"></canvas>
+    <div class="row g-3 mb-3">
+      <div class="col-lg-7">
+        <div class="content-card h-100">
+          <div class="content-card-header">
+            <span class="content-card-title"><i class="bi bi-tag-fill me-2 text-primary"></i>Jobs by Category</span>
+          </div>
+          <div class="content-card-body">
+            <canvas id="categoryChart" height="210"></canvas>
+          </div>
         </div>
       </div>
-      <div class="col-lg-6">
-        <div class="stat-card">
-          <h6 class="fw-bold mb-3">Jobs by Type</h6>
-          <canvas id="typeChart" height="220"></canvas>
+      <div class="col-lg-5">
+        <div class="content-card h-100">
+          <div class="content-card-header">
+            <span class="content-card-title"><i class="bi bi-pie-chart-fill me-2 text-amber" style="color:#d97706"></i>Jobs by Type</span>
+          </div>
+          <div class="content-card-body">
+            <canvas id="typeChart" height="210"></canvas>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Top Jobs Table -->
-    <div class="stat-card">
-      <h6 class="fw-bold mb-3">Top Viewed Jobs</h6>
+    <!-- Top Viewed Jobs -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <span class="content-card-title"><i class="bi bi-fire me-2 text-danger"></i>Top Viewed Jobs</span>
+        <span class="badge bg-primary-subtle text-primary rounded-pill" style="font-size:0.72rem">Top 5</span>
+      </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr><th>#</th><th>Job Title</th><th>Company</th><th>Views</th></tr>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Job Title</th><th>Company</th><th>Views</th>
+            </tr>
           </thead>
-          <tbody id="topJobsTable"></tbody>
+          <tbody id="topJobsTable">
+            <tr><td colspan="4" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
+  <!-- /section-dashboard -->
 
-  <!-- ── Users Section ─────────────────────────────────────────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════
+       USERS SECTION
+       ════════════════════════════════════════════════════════════════════ -->
   <div id="section-users" class="d-none">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="d-flex gap-2">
-        <select class="form-select form-select-sm w-auto" id="userRoleFilter" onchange="loadUsers()">
+    <div class="content-card">
+      <div class="filter-bar">
+        <i class="bi bi-funnel text-muted"></i>
+        <select class="form-select" id="userRoleFilter" onchange="usersPage=1;loadUsers()">
           <option value="">All Roles</option>
           <option value="student">Students</option>
           <option value="employer">Employers</option>
           <option value="admin">Admins</option>
         </select>
+        <input class="form-control" id="userSearch" placeholder="Search name or email…" oninput="usersPage=1;loadUsers()" style="max-width:220px" />
+        <span class="ms-auto text-muted small fw-semibold" id="userCount"></span>
       </div>
-      <span class="text-muted small" id="userCount"></span>
-    </div>
-    <div class="stat-card">
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User</th><th>Email</th><th>Role</th><th>Joined</th><th style="text-align:right">Actions</th>
+            </tr>
           </thead>
           <tbody id="usersTable">
+            <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="usersPagination" class="d-flex justify-content-center py-3"></div>
+    </div>
+  </div>
+  <!-- /section-users -->
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       JOBS SECTION
+       ════════════════════════════════════════════════════════════════════ -->
+  <div id="section-jobs" class="d-none">
+    <div class="content-card">
+      <div class="filter-bar">
+        <i class="bi bi-funnel text-muted"></i>
+        <select class="form-select" id="jobStatusFilter" onchange="jobsPage=1;loadAdminJobs()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="closed">Closed</option>
+          <option value="pending">Pending</option>
+        </select>
+        <input class="form-control" id="jobSearch" placeholder="Search title or company…" oninput="jobsPage=1;loadAdminJobs()" style="max-width:220px" />
+        <span class="ms-auto text-muted small fw-semibold" id="jobCount"></span>
+      </div>
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Job Title</th><th>Company</th><th>Type</th><th>Status</th><th>Views</th><th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="jobsTable">
             <tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
           </tbody>
         </table>
       </div>
-      <div id="usersPagination" class="d-flex justify-content-center mt-3"></div>
+      <div id="jobsPagination" class="d-flex justify-content-center py-3"></div>
     </div>
   </div>
+  <!-- /section-jobs -->
 
-  <!-- ── Jobs Section ──────────────────────────────────────────────────── -->
-  <div id="section-jobs" class="d-none">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <select class="form-select form-select-sm w-auto" id="jobStatusFilter" onchange="loadAdminJobs()">
-        <option value="">All Status</option>
-        <option value="active">Active</option>
-        <option value="closed">Closed</option>
-        <option value="pending">Pending</option>
-      </select>
-      <span class="text-muted small" id="jobCount"></span>
+  <!-- ════════════════════════════════════════════════════════════════════
+       ANALYTICS SECTION
+       ════════════════════════════════════════════════════════════════════ -->
+  <div id="section-analytics" class="d-none">
+    <div class="row g-3 mb-3">
+      <div class="col-lg-6">
+        <div class="content-card h-100">
+          <div class="content-card-header">
+            <span class="content-card-title"><i class="bi bi-eye-fill me-2 text-primary"></i>Job Views — Last 30 Days</span>
+          </div>
+          <div class="content-card-body">
+            <canvas id="viewsChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="content-card h-100">
+          <div class="content-card-header">
+            <span class="content-card-title"><i class="bi bi-send-fill me-2 text-success"></i>Applications — Last 30 Days</span>
+          </div>
+          <div class="content-card-body">
+            <canvas id="appsChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="stat-card">
+    <div class="content-card">
+      <div class="content-card-header">
+        <span class="content-card-title"><i class="bi bi-trophy-fill me-2 text-warning"></i>Most Applied Jobs</span>
+        <span class="badge bg-success-subtle text-success rounded-pill" style="font-size:0.72rem">Top 10</span>
+      </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr><th>ID</th><th>Title</th><th>Company</th><th>Type</th><th>Status</th><th>Views</th><th>Actions</th></tr>
+        <table class="admin-table">
+          <thead>
+            <tr><th>#</th><th>Job Title</th><th>Company</th><th>Applications</th></tr>
           </thead>
-          <tbody id="jobsTable">
-            <tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          <tbody id="mostAppliedTable">
+            <tr><td colspan="4" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
           </tbody>
         </table>
       </div>
-      <div id="jobsPagination" class="d-flex justify-content-center mt-3"></div>
     </div>
   </div>
-
-  <!-- ── Analytics Section ─────────────────────────────────────────────── -->
-  <div id="section-analytics" class="d-none">
-    <div class="row g-3 mb-4">
-      <div class="col-lg-6">
-        <div class="stat-card">
-          <h6 class="fw-bold mb-3">Job Views (Last 30 Days)</h6>
-          <canvas id="viewsChart" height="200"></canvas>
-        </div>
-      </div>
-      <div class="col-lg-6">
-        <div class="stat-card">
-          <h6 class="fw-bold mb-3">Applications (Last 30 Days)</h6>
-          <canvas id="appsChart" height="200"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <h6 class="fw-bold mb-3">Most Applied Jobs</h6>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr><th>#</th><th>Job Title</th><th>Company</th><th>Applications</th></tr>
-          </thead>
-          <tbody id="mostAppliedTable"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <!-- /section-analytics -->
 
 </div><!-- /main-content -->
 
-<div id="toastContainer" class="toast-container"></div>
+<!-- ════════════════════════════════════════════════════════════════════════
+     CONFIRM DELETE MODAL
+     ════════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+      <div class="modal-body text-center p-4">
+        <div class="mb-3" style="font-size:2.5rem">🗑️</div>
+        <h5 class="fw-bold mb-1" id="confirmTitle">Are you sure?</h5>
+        <p class="text-muted small mb-4" id="confirmBody">This action cannot be undone.</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger px-4" id="confirmOkBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
 <script>
-  // Require admin
+  // ── Auth Guard ─────────────────────────────────────────────────────────
   const user = api.getUser();
   if (!user || user.role !== 'admin') window.location.href = '/login.html';
 
-  document.getElementById('adminName').textContent = user.name;
-  document.getElementById('adminAvatar').textContent = user.name.charAt(0).toUpperCase();
+  // Populate user identity
+  const initials = user.name.charAt(0).toUpperCase();
+  document.getElementById('adminNameTop').textContent   = user.name;
+  document.getElementById('adminAvatarTop').textContent = initials;
+  document.getElementById('sidebarName').textContent    = user.name;
+  document.getElementById('sidebarAvatar').textContent  = initials;
 
-  let usersPage = 1, jobsPage = 1;
+  // Chart instances
   let categoryChart, typeChart, viewsChart, appsChart;
+
+  // Pagination state
+  let usersPage = 1, jobsPage = 1;
+
+  // Confirm modal helper
+  const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+  function showConfirm(title, body, onOk) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent  = body;
+    const btn = document.getElementById('confirmOkBtn');
+    btn.onclick = () => { onOk(); confirmModal.hide(); };
+    confirmModal.show();
+  }
+
+  // ── Section Switching ──────────────────────────────────────────────────
+  const sectionMeta = {
+    dashboard: { title: 'Dashboard',  subtitle: 'Welcome back — here\'s what\'s happening today.' },
+    users:     { title: 'Users',      subtitle: 'Manage all registered users on the platform.' },
+    jobs:      { title: 'Jobs',       subtitle: 'View and moderate all job listings.' },
+    analytics: { title: 'Analytics',  subtitle: 'Platform performance over the last 30 days.' },
+  };
 
   function showSection(name, link) {
     document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
-    document.getElementById(`section-${name}`).classList.remove('d-none');
+    document.getElementById('section-' + name).classList.remove('d-none');
     document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
     if (link) link.classList.add('active');
-    document.getElementById('sectionTitle').textContent =
-      { dashboard: 'Dashboard', users: 'Users', jobs: 'Jobs', analytics: 'Analytics' }[name];
-
-    if (name === 'users') loadUsers();
-    if (name === 'jobs') loadAdminJobs();
+    const meta = sectionMeta[name] || { title: name, subtitle: '' };
+    document.getElementById('sectionTitle').textContent    = meta.title;
+    document.getElementById('sectionSubtitle').textContent = meta.subtitle;
+    if (name === 'users')     loadUsers();
+    if (name === 'jobs')      loadAdminJobs();
     if (name === 'analytics') loadAnalytics();
   }
 
-  // ── Dashboard ────────────────────────────────────────────────────────────
+  // ── DASHBOARD ──────────────────────────────────────────────────────────
   async function loadDashboard() {
     try {
       const data = await api.getAdminStats();
@@ -199,174 +556,256 @@
 
       document.getElementById('statCards').innerHTML = `
         <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
+          <div class="kpi-card blue">
+            <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="title">Total Users</div>
-                <div class="value">${stats.totalUsers}</div>
+                <div class="kpi-label">Total Users</div>
+                <div class="kpi-value">${stats.totalUsers.toLocaleString()}</div>
               </div>
-              <div class="icon bg-primary bg-opacity-10 text-primary">👥</div>
+              <div class="kpi-icon blue"><i class="bi bi-people-fill"></i></div>
             </div>
           </div>
         </div>
         <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
+          <div class="kpi-card green">
+            <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="title">Active Jobs</div>
-                <div class="value">${stats.activeJobs}</div>
+                <div class="kpi-label">Active Jobs</div>
+                <div class="kpi-value">${stats.activeJobs.toLocaleString()}</div>
               </div>
-              <div class="icon bg-success bg-opacity-10 text-success">💼</div>
+              <div class="kpi-icon green"><i class="bi bi-briefcase-fill"></i></div>
             </div>
           </div>
         </div>
         <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
+          <div class="kpi-card amber">
+            <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="title">Applications</div>
-                <div class="value">${stats.totalApplications}</div>
+                <div class="kpi-label">Applications</div>
+                <div class="kpi-value">${stats.totalApplications.toLocaleString()}</div>
               </div>
-              <div class="icon bg-warning bg-opacity-10 text-warning">📋</div>
+              <div class="kpi-icon amber"><i class="bi bi-file-earmark-text-fill"></i></div>
             </div>
           </div>
         </div>
         <div class="col-sm-6 col-xl-3">
-          <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
+          <div class="kpi-card purple">
+            <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="title">Total Views</div>
-                <div class="value">${stats.totalViews || 0}</div>
+                <div class="kpi-label">Total Views</div>
+                <div class="kpi-value">${(stats.totalViews || 0).toLocaleString()}</div>
               </div>
-              <div class="icon bg-info bg-opacity-10 text-info">👁️</div>
+              <div class="kpi-icon purple"><i class="bi bi-eye-fill"></i></div>
             </div>
           </div>
         </div>
       `;
 
-      // Category chart
+      // Category bar chart
       if (categoryChart) categoryChart.destroy();
       categoryChart = new Chart(document.getElementById('categoryChart'), {
-        type: 'doughnut',
-        data: {
-          labels: jobsByCategory.map(r => r.category || 'Other'),
-          datasets: [{ data: jobsByCategory.map(r => r.count), backgroundColor: ['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d'] }]
-        },
-        options: { plugins: { legend: { position: 'right' } }, responsive: true }
-      });
-
-      // Type chart
-      if (typeChart) typeChart.destroy();
-      typeChart = new Chart(document.getElementById('typeChart'), {
         type: 'bar',
         data: {
-          labels: jobsByType.map(r => r.job_type),
-          datasets: [{ label: 'Jobs', data: jobsByType.map(r => r.count), backgroundColor: '#2563eb', borderRadius: 6 }]
+          labels: jobsByCategory.map(r => r.category || 'Other'),
+          datasets: [{
+            label: 'Jobs',
+            data: jobsByCategory.map(r => r.count),
+            backgroundColor: ['#2563eb','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c'],
+            borderRadius: 6, borderSkipped: false,
+          }]
         },
-        options: { plugins: { legend: { display: false } }, responsive: true, scales: { y: { beginAtZero: true } } }
+        options: {
+          plugins: { legend: { display: false } },
+          responsive: true,
+          scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+        }
+      });
+
+      // Type doughnut chart
+      if (typeChart) typeChart.destroy();
+      typeChart = new Chart(document.getElementById('typeChart'), {
+        type: 'doughnut',
+        data: {
+          labels: jobsByType.map(r => r.job_type),
+          datasets: [{
+            data: jobsByType.map(r => r.count),
+            backgroundColor: ['#2563eb','#16a34a','#d97706','#7c3aed','#0891b2'],
+            borderWidth: 3, borderColor: '#fff',
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } } },
+          responsive: true, cutout: '62%',
+        }
       });
 
       // Top jobs table
-      document.getElementById('topJobsTable').innerHTML = topJobs.map((j, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td class="fw-semibold">${j.title}</td>
-          <td class="text-muted">${j.company_name}</td>
-          <td><span class="badge bg-primary">${j.views}</span></td>
-        </tr>
-      `).join('');
+      document.getElementById('topJobsTable').innerHTML = topJobs.length
+        ? topJobs.map((j, i) => `
+          <tr>
+            <td>
+              <span style="width:24px;height:24px;border-radius:6px;background:${['#dbeafe','#dcfce7','#fef3c7','#ede9fe','#fce7f3'][i]};color:${['#1d4ed8','#15803d','#92400e','#6d28d9','#9d174d'][i]};display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">
+                ${i + 1}
+              </span>
+            </td>
+            <td class="fw-semibold">${escHtml(j.title)}</td>
+            <td class="text-muted">${escHtml(j.company_name)}</td>
+            <td>
+              <span class="d-inline-flex align-items-center gap-1 text-primary fw-semibold" style="font-size:0.85rem">
+                <i class="bi bi-eye-fill" style="font-size:0.75rem"></i> ${j.views.toLocaleString()}
+              </span>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="4" class="empty-state"><i class="bi bi-briefcase"></i>No jobs yet.</td></tr>';
+
     } catch (err) {
       showToast('Failed to load dashboard stats', 'danger');
+      document.getElementById('statCards').innerHTML =
+        '<div class="col-12 text-center text-danger py-3">Failed to load stats. Is the server running?</div>';
     }
   }
 
-  // ── Users ────────────────────────────────────────────────────────────────
+  // ── USERS ──────────────────────────────────────────────────────────────
   async function loadUsers() {
-    const role = document.getElementById('userRoleFilter').value;
+    const role   = document.getElementById('userRoleFilter').value;
+    const search = document.getElementById('userSearch').value.trim();
+    document.getElementById('usersTable').innerHTML =
+      '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
     try {
-      const data = await api.getAdminUsers({ role, page: usersPage, limit: 15 });
-      document.getElementById('userCount').textContent = `${data.pagination.total} users`;
-      document.getElementById('usersTable').innerHTML = data.users.map(u => `
-        <tr>
-          <td class="text-muted small">${u.id}</td>
-          <td class="fw-semibold">${u.name}</td>
-          <td class="text-muted small">${u.email}</td>
-          <td><span class="badge bg-${u.role === 'admin' ? 'danger' : u.role === 'employer' ? 'warning text-dark' : 'primary'}">${u.role}</span></td>
-          <td class="text-muted small">${new Date(u.created_at).toLocaleDateString()}</td>
-          <td>
-            ${u.id !== user.id ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id}, this)"><i class="bi bi-trash"></i></button>` : '<span class="text-muted small">You</span>'}
-          </td>
-        </tr>
-      `).join('');
-      renderAdminPagination('usersPagination', data.pagination, p => { usersPage = p; loadUsers(); });
+      const params = { page: usersPage, limit: 15 };
+      if (role)   params.role   = role;
+      if (search) params.search = search;
+      const data = await api.getAdminUsers(params);
+      document.getElementById('userCount').textContent = `${data.pagination.total.toLocaleString()} users`;
+
+      document.getElementById('usersTable').innerHTML = data.users.length
+        ? data.users.map(u => `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                  color:#fff;font-weight:700;font-size:0.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  ${u.name.charAt(0).toUpperCase()}
+                </div>
+                <span class="fw-semibold" style="color:#0f172a">${escHtml(u.name)}</span>
+              </div>
+            </td>
+            <td class="text-muted" style="font-size:0.83rem">${escHtml(u.email)}</td>
+            <td>
+              <span class="role-badge role-${u.role}">
+                ${u.role === 'admin' ? '<i class="bi bi-shield-fill-check"></i>' :
+                  u.role === 'employer' ? '<i class="bi bi-building"></i>' : '<i class="bi bi-person-fill"></i>'}
+                ${u.role}
+              </span>
+            </td>
+            <td class="text-muted" style="font-size:0.82rem">${formatDate(u.created_at)}</td>
+            <td style="text-align:right">
+              ${u.id !== user.id
+                ? `<button class="btn-icon danger" title="Delete user"
+                    onclick="confirmDeleteUser(${u.id}, '${escHtml(u.name)}', this)">
+                    <i class="bi bi-trash3"></i>
+                  </button>`
+                : '<span class="text-muted small fst-italic">You</span>'}
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5"><div class="empty-state"><i class="bi bi-people"></i>No users found.</div></td></tr>';
+
+      renderPagination('usersPagination', data.pagination, p => { usersPage = p; loadUsers(); });
     } catch (err) {
       showToast('Failed to load users', 'danger');
     }
   }
 
-  async function deleteUser(id, btn) {
-    if (!confirm('Delete this user? This cannot be undone.')) return;
-    try {
-      await api.deleteUser(id);
-      btn.closest('tr').remove();
-      showToast('User deleted', 'success');
-    } catch (err) {
-      showToast(err.message, 'danger');
-    }
+  function confirmDeleteUser(id, name, btn) {
+    showConfirm(`Delete "${name}"?`, 'This will permanently remove the user and all their data.', async () => {
+      try {
+        await api.deleteUser(id);
+        btn.closest('tr').remove();
+        showToast('User deleted successfully', 'success');
+      } catch (err) {
+        showToast(err.message, 'danger');
+      }
+    });
   }
 
-  // ── Jobs ─────────────────────────────────────────────────────────────────
+  // ── JOBS ───────────────────────────────────────────────────────────────
   async function loadAdminJobs() {
     const status = document.getElementById('jobStatusFilter').value;
+    const search = document.getElementById('jobSearch').value.trim();
+    document.getElementById('jobsTable').innerHTML =
+      '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
     try {
-      const data = await api.getAdminJobs({ status, page: jobsPage, limit: 15 });
-      document.getElementById('jobCount').textContent = `${data.pagination.total} jobs`;
-      document.getElementById('jobsTable').innerHTML = data.jobs.map(j => `
-        <tr>
-          <td class="text-muted small">${j.id}</td>
-          <td class="fw-semibold">${j.title}</td>
-          <td class="text-muted small">${j.company_name}</td>
-          <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
-          <td>
-            <select class="form-select form-select-sm w-auto" onchange="updateJobStatus(${j.id}, this.value)" style="min-width:90px">
-              <option value="active" ${j.status === 'active' ? 'selected' : ''}>Active</option>
-              <option value="closed" ${j.status === 'closed' ? 'selected' : ''}>Closed</option>
-              <option value="pending" ${j.status === 'pending' ? 'selected' : ''}>Pending</option>
-            </select>
-          </td>
-          <td>${j.views}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteJobAdmin(${j.id}, this)"><i class="bi bi-trash"></i></button>
-          </td>
-        </tr>
-      `).join('');
-      renderAdminPagination('jobsPagination', data.pagination, p => { jobsPage = p; loadAdminJobs(); });
+      const params = { page: jobsPage, limit: 15 };
+      if (status) params.status = status;
+      if (search) params.search = search;
+      const data = await api.getAdminJobs(params);
+      document.getElementById('jobCount').textContent = `${data.pagination.total.toLocaleString()} jobs`;
+
+      document.getElementById('jobsTable').innerHTML = data.jobs.length
+        ? data.jobs.map(j => `
+          <tr>
+            <td class="fw-semibold" style="color:#0f172a;max-width:200px">
+              <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(j.title)}</div>
+            </td>
+            <td class="text-muted" style="font-size:0.83rem">${escHtml(j.company_name)}</td>
+            <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
+            <td>
+              <select class="form-select form-select-sm border-0 fw-semibold"
+                style="min-width:100px;background:transparent;padding:4px 8px;font-size:0.78rem"
+                onchange="updateJobStatus(${j.id}, this.value, this)">
+                <option value="active"  ${j.status === 'active'  ? 'selected' : ''}>✅ Active</option>
+                <option value="closed"  ${j.status === 'closed'  ? 'selected' : ''}>⛔ Closed</option>
+                <option value="pending" ${j.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+              </select>
+            </td>
+            <td>
+              <span class="d-inline-flex align-items-center gap-1 text-muted fw-semibold" style="font-size:0.83rem">
+                <i class="bi bi-eye" style="font-size:0.75rem"></i> ${j.views.toLocaleString()}
+              </span>
+            </td>
+            <td style="text-align:right">
+              <button class="btn-icon danger" title="Delete job"
+                onclick="confirmDeleteJob(${j.id}, '${escHtml(j.title)}', this)">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="6"><div class="empty-state"><i class="bi bi-briefcase"></i>No jobs found.</div></td></tr>';
+
+      renderPagination('jobsPagination', data.pagination, p => { jobsPage = p; loadAdminJobs(); });
     } catch (err) {
       showToast('Failed to load jobs', 'danger');
     }
   }
 
-  async function updateJobStatus(id, status) {
+  async function updateJobStatus(id, status, sel) {
+    const prev = sel.dataset.prev || sel.value;
+    sel.dataset.prev = status;
     try {
       await api.updateJobStatus(id, status);
-      showToast(`Job status updated to ${status}`, 'success');
+      showToast(`Job status set to "${status}"`, 'success');
     } catch (err) {
+      sel.value = prev;
       showToast(err.message, 'danger');
     }
   }
 
-  async function deleteJobAdmin(id, btn) {
-    if (!confirm('Delete this job? This cannot be undone.')) return;
-    try {
-      await api.deleteJob(id);
-      btn.closest('tr').remove();
-      showToast('Job deleted', 'success');
-    } catch (err) {
-      showToast(err.message, 'danger');
-    }
+  function confirmDeleteJob(id, title, btn) {
+    showConfirm(`Delete "${title}"?`, 'This will permanently remove the job and all its applications.', async () => {
+      try {
+        await api.deleteJob(id);
+        btn.closest('tr').remove();
+        showToast('Job deleted successfully', 'success');
+      } catch (err) {
+        showToast(err.message, 'danger');
+      }
+    });
   }
 
-  // ── Analytics ────────────────────────────────────────────────────────────
+  // ── ANALYTICS ─────────────────────────────────────────────────────────
   async function loadAnalytics() {
     try {
       const data = await api.getAnalytics();
@@ -376,9 +815,18 @@
         type: 'line',
         data: {
           labels: data.viewsPerDay.map(r => r.date),
-          datasets: [{ label: 'Views', data: data.viewsPerDay.map(r => r.views), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.4 }]
+          datasets: [{
+            label: 'Views',
+            data: data.viewsPerDay.map(r => r.views),
+            borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)',
+            fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#2563eb',
+          }]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+        }
       });
 
       if (appsChart) appsChart.destroy();
@@ -386,39 +834,73 @@
         type: 'line',
         data: {
           labels: data.appsPerDay.map(r => r.date),
-          datasets: [{ label: 'Applications', data: data.appsPerDay.map(r => r.applications), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', fill: true, tension: 0.4 }]
+          datasets: [{
+            label: 'Applications',
+            data: data.appsPerDay.map(r => r.applications),
+            borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)',
+            fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#16a34a',
+          }]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+        }
       });
 
-      document.getElementById('mostAppliedTable').innerHTML = data.mostApplied.map((j, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td class="fw-semibold">${j.title}</td>
-          <td class="text-muted">${j.company_name}</td>
-          <td><span class="badge bg-success">${j.application_count}</span></td>
-        </tr>
-      `).join('');
+      document.getElementById('mostAppliedTable').innerHTML = data.mostApplied.length
+        ? data.mostApplied.map((j, i) => `
+          <tr>
+            <td style="width:40px">
+              <span style="width:24px;height:24px;border-radius:6px;background:${i<3?'#fef3c7':'#f1f5f9'};color:${i<3?'#92400e':'#64748b'};display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem">
+                ${i + 1}
+              </span>
+            </td>
+            <td class="fw-semibold">${escHtml(j.title)}</td>
+            <td class="text-muted" style="font-size:0.83rem">${escHtml(j.company_name)}</td>
+            <td>
+              <span class="d-inline-flex align-items-center gap-1 text-success fw-semibold" style="font-size:0.85rem">
+                <i class="bi bi-send-fill" style="font-size:0.75rem"></i> ${j.application_count.toLocaleString()}
+              </span>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="4"><div class="empty-state"><i class="bi bi-graph-up"></i>No application data yet.</div></td></tr>';
+
     } catch (err) {
       showToast('Failed to load analytics', 'danger');
     }
   }
 
-  // ── Pagination helper ────────────────────────────────────────────────────
-  function renderAdminPagination(containerId, { page, total, limit }, onPage) {
+  // ── Pagination ─────────────────────────────────────────────────────────
+  function renderPagination(containerId, { page, total, limit }, onPage) {
     const pages = Math.ceil(total / limit);
-    if (pages <= 1) { document.getElementById(containerId).innerHTML = ''; return; }
-    let html = '<nav><ul class="pagination pagination-sm">';
-    html += `<li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="(${onPage.toString()})(${page-1});return false;">‹</a></li>`;
-    for (let i = 1; i <= pages; i++) {
-      html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="(${onPage.toString()})(${i});return false;">${i}</a></li>`;
-    }
-    html += `<li class="page-item ${page === pages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="(${onPage.toString()})(${page+1});return false;">›</a></li>`;
+    const el = document.getElementById(containerId);
+    if (pages <= 1) { el.innerHTML = ''; return; }
+    let html = '<nav><ul class="pagination pagination-sm mb-0">';
+    html += `<li class="page-item ${page===1?'disabled':''}"><a class="page-link" href="#" onclick="event.preventDefault();(${onPage.toString()})(${page-1})">‹</a></li>`;
+    const start = Math.max(1, page-2), end = Math.min(pages, page+2);
+    if (start > 1) html += `<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault();(${onPage.toString()})(1)">1</a></li>${start>2?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}`;
+    for (let i = start; i <= end; i++)
+      html += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="#" onclick="event.preventDefault();(${onPage.toString()})(${i})">${i}</a></li>`;
+    if (end < pages) html += `${end<pages-1?'<li class="page-item disabled"><span class="page-link">…</span></li>':''}<li class="page-item"><a class="page-link" href="#" onclick="event.preventDefault();(${onPage.toString()})(${pages})">${pages}</a></li>`;
+    html += `<li class="page-item ${page===pages?'disabled':''}"><a class="page-link" href="#" onclick="event.preventDefault();(${onPage.toString()})(${page+1})">›</a></li>`;
     html += '</ul></nav>';
-    document.getElementById(containerId).innerHTML = html;
+    el.innerHTML = html;
   }
 
-  // Init
+  // ── Helpers ────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────
   loadDashboard();
 </script>
 </body>

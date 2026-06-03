@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Storyboard — JobPortal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #1e293b; }
+
+    /* Cover */
+    .cover {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb, #3b82f6);
+      color: white; text-align: center;
+      padding: 80px 20px; min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .cover .logo { font-size: 3rem; font-weight: 900; margin-bottom: 10px; }
+    .cover .logo span { color: #fbbf24; }
+    .cover h2 { font-size: 1.4rem; opacity: 0.8; font-weight: 400; margin-bottom: 40px; }
+    .cover .scroll-hint { opacity: 0.5; font-size: 0.85rem; animation: bounce 2s infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+    /* Scene layout */
+    .scene {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 60px 40px; gap: 60px;
+    }
+    .scene:nth-child(even) { flex-direction: row-reverse; background: #f8fafc; }
+    .scene:nth-child(odd)  { background: white; }
+
+    .scene-number {
+      position: absolute; top: 30px; left: 40px;
+      font-size: 0.75rem; font-weight: 700; color: #94a3b8;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .scene { position: relative; }
+
+    /* Text side */
+    .scene-text { flex: 1; max-width: 420px; }
+    .scene-tag {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px; margin-bottom: 14px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .scene-text h2 { font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-bottom: 12px; line-height: 1.2; }
+    .scene-text p  { color: #64748b; line-height: 1.7; margin-bottom: 16px; font-size: 0.95rem; }
+    .scene-steps { list-style: none; }
+    .scene-steps li {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 10px; font-size: 0.88rem; color: #475569;
+    }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; color: white;
+      flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* Screen mockup */
+    .mockup-wrap { flex: 1; display: flex; justify-content: center; align-items: center; }
+    .browser {
+      width: 100%; max-width: 520px;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      border: 1px solid #e2e8f0;
+    }
+    .browser-bar {
+      background: #f1f5f9; padding: 10px 14px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .dot-r { width:10px;height:10px;border-radius:50%;background:#ef4444; }
+    .dot-y { width:10px;height:10px;border-radius:50%;background:#f59e0b; }
+    .dot-g { width:10px;height:10px;border-radius:50%;background:#22c55e; }
+    .url-bar {
+      flex:1; background:white; border-radius:6px; padding:4px 10px;
+      font-size:0.72rem; color:#64748b; border:1px solid #e2e8f0;
+    }
+    .browser-body { background: white; }
+
+    /* Mockup UI components */
+    .mock-nav {
+      background: white; padding: 10px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .mock-brand { font-weight: 800; font-size: 0.9rem; color: #2563eb; }
+    .mock-brand span { color: #f59e0b; }
+    .mock-btn { background: #2563eb; color: white; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.72rem; font-weight: 600; }
+    .mock-hero { background: linear-gradient(135deg,#1e3a8a,#2563eb); padding: 24px 16px; color: white; }
+    .mock-hero h3 { font-size: 1rem; font-weight: 800; margin-bottom: 8px; }
+    .mock-search { background: white; border-radius: 30px; padding: 6px 8px 6px 14px; display: flex; align-items: center; gap: 8px; }
+    .mock-search input { border: none; outline: none; font-size: 0.72rem; color: #64748b; flex: 1; background: transparent; }
+    .mock-search button { background: #f59e0b; border: none; border-radius: 20px; padding: 5px 12px; font-size: 0.7rem; font-weight: 700; color: white; }
+    .mock-jobs { padding: 12px; }
+    .mock-job-card {
+      border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px;
+      margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start;
+      transition: box-shadow 0.2s;
+    }
+    .mock-job-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .mock-logo { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: white; flex-shrink: 0; }
+    .mock-job-title { font-size: 0.78rem; font-weight: 700; color: #1e293b; }
+    .mock-company { font-size: 0.68rem; color: #64748b; margin-top: 2px; }
+    .mock-badges { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+    .mock-badge { font-size: 0.6rem; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .badge-purple { background: #ede9fe; color: #6d28d9; }
+    .mock-bm { margin-left: auto; color: #f59e0b; font-size: 1rem; }
+
+    /* Auth form */
+    .mock-form { padding: 20px; }
+    .mock-form h3 { font-size: 0.9rem; font-weight: 800; text-align: center; color: #1e293b; margin-bottom: 4px; }
+    .mock-form p { font-size: 0.68rem; text-align: center; color: #94a3b8; margin-bottom: 14px; }
+    .mock-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 10px; font-size: 0.72rem; color: #475569; margin-bottom: 8px; }
+    .mock-submit { width: 100%; background: #2563eb; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.78rem; font-weight: 700; }
+    .mock-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    .mock-tab { flex: 1; padding: 6px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; text-align: center; border: 1px solid #e2e8f0; color: #64748b; }
+    .mock-tab.active { background: #2563eb; color: white; border-color: #2563eb; }
+
+    /* Job detail */
+    .mock-detail { padding: 14px; }
+    .mock-detail-header { display: flex; gap: 10px; margin-bottom: 12px; }
+    .mock-detail h3 { font-size: 0.85rem; font-weight: 800; color: #1e293b; }
+    .mock-detail p { font-size: 0.68rem; color: #64748b; line-height: 1.6; margin-bottom: 8px; }
+    .mock-apply-btn { background: #2563eb; color: white; border: none; border-radius: 6px; padding: 7px 16px; font-size: 0.72rem; font-weight: 700; margin-right: 6px; }
+    .mock-bm-btn { background: white; color: #f59e0b; border: 1px solid #f59e0b; border-radius: 6px; padding: 7px 12px; font-size: 0.72rem; font-weight: 700; }
+    .mock-salary-box { background: #f0fdf4; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; font-size: 0.72rem; color: #15803d; font-weight: 700; }
+
+    /* Filter sidebar */
+    .mock-filter-layout { display: flex; gap: 8px; padding: 10px; }
+    .mock-sidebar { width: 90px; flex-shrink: 0; }
+    .mock-sidebar h4 { font-size: 0.65rem; font-weight: 700; color: #475569; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+    .mock-check { display: flex; align-items: center; gap: 4px; font-size: 0.6rem; color: #64748b; margin-bottom: 4px; }
+    .mock-check input { width: 10px; height: 10px; }
+    .mock-jobs-col { flex: 1; }
+
+    /* Profile */
+    .mock-profile-header { background: linear-gradient(135deg,#1e3a8a,#2563eb); padding: 16px; color: white; display: flex; gap: 10px; align-items: center; }
+    .mock-avatar { width: 44px; height: 44px; border-radius: 50%; background: #60a5fa; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: white; flex-shrink: 0; }
+    .mock-profile-name { font-size: 0.85rem; font-weight: 700; }
+    .mock-profile-email { font-size: 0.65rem; opacity: 0.75; }
+    .mock-profile-body { padding: 10px; }
+    .mock-app-row { border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .mock-app-title { font-size: 0.72rem; font-weight: 700; color: #1e293b; }
+    .mock-app-co { font-size: 0.62rem; color: #64748b; }
+    .mock-status { font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+
+    /* Admin */
+    .mock-admin { display: flex; height: 320px; }
+    .mock-sidebar-admin { width: 80px; background: #1e293b; padding: 10px 6px; flex-shrink: 0; }
+    .mock-sidebar-admin .brand { font-size: 0.6rem; font-weight: 800; color: white; margin-bottom: 12px; text-align: center; }
+    .mock-sidebar-admin .brand span { color: #f59e0b; }
+    .mock-nav-item { font-size: 0.58rem; color: #94a3b8; padding: 5px 6px; border-radius: 4px; margin-bottom: 3px; }
+    .mock-nav-item.active { background: rgba(37,99,235,0.3); color: #60a5fa; }
+    .mock-admin-main { flex: 1; padding: 10px; background: #f8fafc; overflow: hidden; }
+    .mock-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .mock-stat { background: white; border-radius: 6px; padding: 8px; border: 1px solid #e2e8f0; }
+    .mock-stat .n { font-size: 1rem; font-weight: 800; }
+    .mock-stat .l { font-size: 0.58rem; color: #94a3b8; }
+    .mock-chart-placeholder { background: white; border-radius: 6px; padding: 8px; border: 1px solid #e2e8f0; height: 80px; display: flex; align-items: flex-end; gap: 4px; justify-content: center; }
+    .mock-bar-chart { width: 14px; border-radius: 3px 3px 0 0; }
+
+    /* Employer */
+    .mock-post-form { padding: 14px; }
+    .mock-post-form h3 { font-size: 0.85rem; font-weight: 800; margin-bottom: 10px; color: #1e293b; }
+    .mock-field-label { font-size: 0.65rem; font-weight: 600; color: #475569; margin-bottom: 3px; }
+    .mock-field { width: 100%; border: 1px solid #e2e8f0; border-radius: 5px; padding: 5px 8px; font-size: 0.68rem; color: #94a3b8; margin-bottom: 8px; }
+    .mock-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .mock-post-btn { background: #2563eb; color: white; border: none; border-radius: 6px; padding: 7px 16px; font-size: 0.72rem; font-weight: 700; }
+
+    /* Print */
+    @media print {
+      body { background: white; }
+      .cover { min-height: auto; padding: 40px; page-break-after: always; }
+      .scene { min-height: auto; padding: 30px; page-break-after: always; }
+      .btn-print { display: none; }
+    }
+
+    .btn-print {
+      position: fixed; bottom: 30px; right: 30px;
+      background: #2563eb; color: white; border: none;
+      padding: 12px 24px; border-radius: 30px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+      z-index: 999;
+    }
+    .btn-print:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+
+<!-- ── COVER ──────────────────────────────────────────────────────────────── -->
+<div class="cover">
+  <div style="font-size:5rem;margin-bottom:20px">💼</div>
+  <div class="logo">Job<span>Portal</span></div>
+  <h2>Full-Stack Job Portal — User Journey Storyboard</h2>
+  <div style="display:flex;gap:16px;margin-bottom:40px;flex-wrap:wrap;justify-content:center">
+    <span style="background:rgba(255,255,255,0.15);padding:6px 16px;border-radius:20px;font-size:0.82rem">🎓 Student</span>
+    <span style="background:rgba(255,255,255,0.15);padding:6px 16px;border-radius:20px;font-size:0.82rem">🏢 Employer</span>
+    <span style="background:rgba(255,255,255,0.15);padding:6px 16px;border-radius:20px;font-size:0.82rem">🛡️ Admin</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:600px;margin-bottom:40px">
+    <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:1.4rem">7</div><div style="font-size:0.72rem;opacity:0.7">Scenes</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:1.4rem">3</div><div style="font-size:0.72rem;opacity:0.7">User Roles</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:1.4rem">18</div><div style="font-size:0.72rem;opacity:0.7">Features</div>
+    </div>
+  </div>
+  <div class="scroll-hint">↓ Scroll to explore the journey</div>
+</div>
+
+<!-- ── SCENE 1: Home Page ─────────────────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 01 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#dbeafe;color:#1d4ed8">🏠 Home Page</span>
+    <h2>Welcome to JobPortal</h2>
+    <p>A student lands on the home page and sees a clean hero section with a search bar, featured jobs, and job categories. Live stats show active jobs, companies, and users.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#2563eb">1</div>User visits <strong>localhost:5000</strong></li>
+      <li><div class="step-num" style="background:#2563eb">2</div>Sees hero banner with search bar</li>
+      <li><div class="step-num" style="background:#2563eb">3</div>Browses featured jobs and categories</li>
+      <li><div class="step-num" style="background:#2563eb">4</div>Clicks <strong>Sign Up</strong> to register</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/index.html</div>
+      </div>
+      <div class="browser-body">
+        <div class="mock-nav">
+          <div class="mock-brand">Job<span>Portal</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:0.72rem;color:#64748b">Home</span>
+            <span style="font-size:0.72rem;color:#64748b">Browse Jobs</span>
+            <button class="mock-btn">Sign Up</button>
+          </div>
+        </div>
+        <div class="mock-hero">
+          <h3>Find Your <span style="color:#fbbf24">Dream Job</span> Today</h3>
+          <p style="font-size:0.68rem;opacity:0.75;margin-bottom:10px">Thousands of jobs from top companies.</p>
+          <div class="mock-search">
+            <span style="font-size:0.7rem;color:#94a3b8">🔍</span>
+            <input placeholder="Job title, keyword..." readonly />
+            <button>Search</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);padding:10px;gap:6px;border-bottom:1px solid #e2e8f0">
+          <div style="text-align:center"><div style="font-size:1rem;font-weight:800;color:#2563eb">24</div><div style="font-size:0.6rem;color:#94a3b8">Active Jobs</div></div>
+          <div style="text-align:center"><div style="font-size:1rem;font-weight:800;color:#2563eb">6</div><div style="font-size:0.6rem;color:#94a3b8">Companies</div></div>
+          <div style="text-align:center"><div style="font-size:1rem;font-weight:800;color:#2563eb">120</div><div style="font-size:0.6rem;color:#94a3b8">Job Seekers</div></div>
+          <div style="text-align:center"><div style="font-size:1rem;font-weight:800;color:#2563eb">45</div><div style="font-size:0.6rem;color:#94a3b8">Applications</div></div>
+        </div>
+        <div class="mock-jobs">
+          <div style="font-size:0.78rem;font-weight:700;margin-bottom:8px">Featured Jobs</div>
+          <div class="mock-job-card">
+            <div class="mock-logo" style="background:#2563eb">T</div>
+            <div><div class="mock-job-title">Frontend Developer</div><div class="mock-company">Tech Corp · San Francisco</div><div class="mock-badges"><span class="mock-badge badge-blue">full-time</span><span class="mock-badge badge-green">$70k–$100k</span></div></div>
+            <div class="mock-bm">🔖</div>
+          </div>
+          <div class="mock-job-card">
+            <div class="mock-logo" style="background:#16a34a">T</div>
+            <div><div class="mock-job-title">Backend Engineer</div><div class="mock-company">Tech Corp · Remote</div><div class="mock-badges"><span class="mock-badge badge-purple">remote</span><span class="mock-badge badge-green">$90k–$130k</span></div></div>
+            <div class="mock-bm">🔖</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCENE 2: Register / Login ─────────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 02 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#dcfce7;color:#15803d">🔐 Authentication</span>
+    <h2>Register & Login</h2>
+    <p>New users register as a Student or Employer. Passwords are hashed with bcrypt. On login, a JWT token is issued and stored — granting access to protected features.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#16a34a">1</div>Choose role: <strong>Student</strong> or <strong>Employer</strong></li>
+      <li><div class="step-num" style="background:#16a34a">2</div>Fill name, email, password</li>
+      <li><div class="step-num" style="background:#16a34a">3</div>Password hashed with <strong>bcrypt</strong></li>
+      <li><div class="step-num" style="background:#16a34a">4</div><strong>JWT token</strong> issued on success</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/register.html</div>
+      </div>
+      <div class="browser-body">
+        <div class="mock-form">
+          <div class="mock-brand" style="text-align:center;font-size:1.2rem;margin-bottom:6px">Job<span>Portal</span></div>
+          <p style="text-align:center;font-size:0.68rem;color:#94a3b8;margin-bottom:12px">Create your account</p>
+          <div class="mock-tabs">
+            <div class="mock-tab active">🎓 Job Seeker</div>
+            <div class="mock-tab">🏢 Employer</div>
+          </div>
+          <div class="mock-field-label">Full Name</div>
+          <input class="mock-input" placeholder="John Doe" readonly />
+          <div class="mock-field-label">Email address</div>
+          <input class="mock-input" placeholder="you@example.com" readonly />
+          <div class="mock-field-label">Password</div>
+          <input class="mock-input" type="password" placeholder="••••••••" readonly />
+          <div class="mock-field-label">Confirm Password</div>
+          <input class="mock-input" type="password" placeholder="••••••••" readonly />
+          <button class="mock-submit">Create Account</button>
+          <p style="text-align:center;font-size:0.68rem;color:#94a3b8;margin-top:10px">Already have an account? <span style="color:#2563eb;font-weight:600">Sign in</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCENE 3: Browse & Filter Jobs ─────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 03 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#ede9fe;color:#6d28d9">🔍 Job Search</span>
+    <h2>Search & Filter Jobs</h2>
+    <p>Students browse all active jobs with a powerful sidebar filter. They can filter by job type, category, location, and salary range. Results paginate automatically.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#7c3aed">1</div>Type keyword in search bar</li>
+      <li><div class="step-num" style="background:#7c3aed">2</div>Filter by type, category, location</li>
+      <li><div class="step-num" style="background:#7c3aed">3</div>Click job title to open detail modal</li>
+      <li><div class="step-num" style="background:#7c3aed">4</div>Click 🔖 to bookmark a job</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/jobs.html</div>
+      </div>
+      <div class="browser-body">
+        <div style="background:#2563eb;padding:10px 14px;color:white">
+          <div style="font-size:0.85rem;font-weight:800;margin-bottom:6px">Browse Jobs</div>
+          <div class="mock-search" style="max-width:300px">
+            <span style="font-size:0.7rem;color:#94a3b8">🔍</span>
+            <input placeholder="Search jobs..." readonly />
+            <button>Search</button>
+          </div>
+        </div>
+        <div class="mock-filter-layout">
+          <div class="mock-sidebar">
+            <h4>🔧 Filters</h4>
+            <div style="font-size:0.6rem;font-weight:600;color:#475569;margin-bottom:4px">Job Type</div>
+            <div class="mock-check"><input type="checkbox" checked readonly /> Full-time</div>
+            <div class="mock-check"><input type="checkbox" readonly /> Part-time</div>
+            <div class="mock-check"><input type="checkbox" readonly /> Remote</div>
+            <div class="mock-check"><input type="checkbox" readonly /> Internship</div>
+            <div style="font-size:0.6rem;font-weight:600;color:#475569;margin:6px 0 4px">Category</div>
+            <select style="width:100%;font-size:0.6rem;border:1px solid #e2e8f0;border-radius:4px;padding:3px"><option>All</option></select>
+          </div>
+          <div class="mock-jobs-col">
+            <div style="font-size:0.65rem;color:#94a3b8;margin-bottom:6px">6 jobs found</div>
+            <div class="mock-job-card">
+              <div class="mock-logo" style="background:#2563eb;width:30px;height:30px;font-size:0.75rem">T</div>
+              <div style="flex:1"><div class="mock-job-title">Frontend Developer</div><div class="mock-company">Tech Corp · SF</div><div class="mock-badges"><span class="mock-badge badge-blue">full-time</span></div></div>
+              <div style="color:#f59e0b;font-size:0.85rem">🔖</div>
+            </div>
+            <div class="mock-job-card">
+              <div class="mock-logo" style="background:#16a34a;width:30px;height:30px;font-size:0.75rem">T</div>
+              <div style="flex:1"><div class="mock-job-title">Backend Engineer</div><div class="mock-company">Tech Corp · Remote</div><div class="mock-badges"><span class="mock-badge badge-purple">remote</span></div></div>
+              <div style="color:#94a3b8;font-size:0.85rem">🔖</div>
+            </div>
+            <div class="mock-job-card">
+              <div class="mock-logo" style="background:#f59e0b;width:30px;height:30px;font-size:0.75rem">T</div>
+              <div style="flex:1"><div class="mock-job-title">UI/UX Designer</div><div class="mock-company">Tech Corp · NY</div><div class="mock-badges"><span class="mock-badge badge-blue">full-time</span></div></div>
+              <div style="color:#94a3b8;font-size:0.85rem">🔖</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCENE 4: Apply for Job ─────────────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 04 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#fef3c7;color:#92400e">📋 Apply & Bookmark</span>
+    <h2>View Job Detail & Apply</h2>
+    <p>Clicking a job opens a detail modal with full description, salary, deadline, and company info. Students can apply with a cover letter or bookmark the job for later.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#f59e0b">1</div>Click job title → modal opens</li>
+      <li><div class="step-num" style="background:#f59e0b">2</div>Read description, requirements, salary</li>
+      <li><div class="step-num" style="background:#f59e0b">3</div>Click <strong>Apply Now</strong> → write cover letter</li>
+      <li><div class="step-num" style="background:#f59e0b">4</div>Application saved to database</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/jobs.html?id=1</div>
+      </div>
+      <div class="browser-body">
+        <div class="mock-detail">
+          <div class="mock-detail-header">
+            <div class="mock-logo" style="background:#2563eb;width:44px;height:44px;font-size:1rem">T</div>
+            <div>
+              <h3>Frontend Developer</h3>
+              <div style="font-size:0.68rem;color:#64748b">Tech Corp</div>
+              <div class="mock-badges" style="margin-top:4px">
+                <span class="mock-badge badge-blue">full-time</span>
+                <span class="mock-badge" style="background:#f1f5f9;color:#64748b">📍 San Francisco</span>
+                <span class="mock-badge badge-green">Technology</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+            <div class="mock-salary-box">💰 $70k – $100k / year</div>
+            <div style="background:#f0f9ff;border-radius:6px;padding:8px 12px;font-size:0.72rem;color:#0369a1;font-weight:700">📅 Deadline: Aug 1, 2026</div>
+          </div>
+          <div style="font-size:0.72rem;font-weight:700;margin-bottom:4px">Job Description</div>
+          <p>We are looking for a skilled Frontend Developer to join our team. You will build responsive web applications using modern JavaScript frameworks...</p>
+          <div style="font-size:0.72rem;font-weight:700;margin:8px 0 4px">Requirements</div>
+          <p>React, HTML, CSS, JavaScript, 2+ years experience</p>
+          <div style="margin-top:12px">
+            <button class="mock-apply-btn">Apply Now</button>
+            <button class="mock-bm-btn">🔖 Bookmark</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCENE 5: Student Profile ───────────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 05 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#dbeafe;color:#1d4ed8">👤 Student Profile</span>
+    <h2>My Profile & Applications</h2>
+    <p>Students manage their profile, track all submitted applications with live status updates, and view their bookmarked jobs — all in one place.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#2563eb">1</div>Edit name, bio, skills, resume URL</li>
+      <li><div class="step-num" style="background:#2563eb">2</div>View all applications + status</li>
+      <li><div class="step-num" style="background:#2563eb">3</div>View and remove bookmarks</li>
+      <li><div class="step-num" style="background:#2563eb">4</div>Status: Pending → Shortlisted → Hired</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/profile.html</div>
+      </div>
+      <div class="browser-body">
+        <div class="mock-profile-header">
+          <div class="mock-avatar">J</div>
+          <div>
+            <div class="mock-profile-name">John Doe</div>
+            <div class="mock-profile-email">john@example.com</div>
+            <span style="background:rgba(255,255,255,0.2);font-size:0.6rem;padding:2px 8px;border-radius:10px;margin-top:4px;display:inline-block">Student</span>
+          </div>
+        </div>
+        <div class="mock-profile-body">
+          <div style="display:flex;gap:8px;margin-bottom:10px;border-bottom:1px solid #e2e8f0;padding-bottom:8px">
+            <div style="font-size:0.72rem;font-weight:700;color:#2563eb;border-bottom:2px solid #2563eb;padding-bottom:4px">My Applications</div>
+            <div style="font-size:0.72rem;color:#94a3b8">Bookmarked Jobs</div>
+          </div>
+          <div class="mock-app-row">
+            <div><div class="mock-app-title">Frontend Developer</div><div class="mock-app-co">Tech Corp · full-time</div></div>
+            <span class="mock-status" style="background:#fef3c7;color:#92400e">pending</span>
+          </div>
+          <div class="mock-app-row">
+            <div><div class="mock-app-title">Backend Engineer</div><div class="mock-app-co">Tech Corp · remote</div></div>
+            <span class="mock-status" style="background:#dbeafe;color:#1d4ed8">reviewed</span>
+          </div>
+          <div class="mock-app-row">
+            <div><div class="mock-app-title">UI/UX Designer</div><div class="mock-app-co">Tech Corp · full-time</div></div>
+            <span class="mock-status" style="background:#dcfce7;color:#15803d">shortlisted</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCENE 6: Employer Post Job ─────────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 06 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#dcfce7;color:#15803d">🏢 Employer</span>
+    <h2>Post a Job Opening</h2>
+    <p>Employers log in and submit new job listings through a structured form. They set the title, type, salary range, deadline, description and requirements. The job goes live immediately.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#16a34a">1</div>Login as Employer</li>
+      <li><div class="step-num" style="background:#16a34a">2</div>Fill in job details and salary</li>
+      <li><div class="step-num" style="background:#16a34a">3</div>Submit → job saved to database</li>
+      <li><div class="step-num" style="background:#16a34a">4</div>Job appears live on Browse Jobs page</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/post-job.html</div>
+      </div>
+      <div class="browser-body">
+        <div style="background:#2563eb;padding:10px 14px;color:white;margin-bottom:0">
+          <div style="font-size:0.85rem;font-weight:800">Post a Job</div>
+          <div style="font-size:0.65rem;opacity:0.75">Reach thousands of qualified candidates</div>
+        </div>
+        <div class="mock-post-form">
+          <div class="mock-field-label">Job Title *</div>
+          <input class="mock-field" placeholder="e.g. Senior Frontend Developer" readonly />
+          <div class="mock-field-row">
+            <div>
+              <div class="mock-field-label">Job Type *</div>
+              <select class="mock-field"><option>Full-time</option></select>
+            </div>
+            <div>
+              <div class="mock-field-label">Category</div>
+              <input class="mock-field" placeholder="Technology" readonly />
+            </div>
+          </div>
+          <div class="mock-field-label">Location *</div>
+          <input class="mock-field" placeholder="San Francisco, CA or Remote" readonly />
+          <div class="mock-field-row">
+            <div>
+              <div class="mock-field-label">Min Salary ($)</div>
+              <input class="mock-field" placeholder="60000" readonly />
+            </div>
+            <div>
+              <div class="mock-field-label">Max Salary ($)</div>
+              <input class="mock-field" placeholder="90000" readonly />
+            </div>
+          </div>
+          <div class="mock-field-label">Job Description *</div>
+          <textarea class="mock-field" rows="3" placeholder="Describe the role and responsibilities..." readonly></textarea>
+          <button class="mock-post-btn">📤 Post Job</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCENE 7: Admin Dashboard ───────────────────────────────────────────── -->
+<div class="scene">
+  <div class="scene-number">Scene 07 / 07</div>
+  <div class="scene-text">
+    <span class="scene-tag" style="background:#fee2e2;color:#dc2626">🛡️ Admin</span>
+    <h2>Admin Dashboard & Analytics</h2>
+    <p>The admin has full control — view platform stats, manage all users and jobs, update job statuses, and track analytics like daily views and applications through live charts.</p>
+    <ul class="scene-steps">
+      <li><div class="step-num" style="background:#dc2626">1</div>Login as Admin</li>
+      <li><div class="step-num" style="background:#dc2626">2</div>View stats: users, jobs, applications</li>
+      <li><div class="step-num" style="background:#dc2626">3</div>Manage users — delete if needed</li>
+      <li><div class="step-num" style="background:#dc2626">4</div>Approve/close jobs, view analytics charts</li>
+    </ul>
+  </div>
+  <div class="mockup-wrap">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="url-bar">localhost:5000/admin.html</div>
+      </div>
+      <div class="browser-body">
+        <div class="mock-admin">
+          <div class="mock-sidebar-admin">
+            <div class="brand">Job<span>Portal</span></div>
+            <div class="mock-nav-item active">📊 Dashboard</div>
+            <div class="mock-nav-item">👥 Users</div>
+            <div class="mock-nav-item">💼 Jobs</div>
+            <div class="mock-nav-item">📈 Analytics</div>
+            <div class="mock-nav-item" style="margin-top:20px">🏠 Site</div>
+            <div class="mock-nav-item" style="color:#f87171">⬅ Logout</div>
+          </div>
+          <div class="mock-admin-main">
+            <div style="font-size:0.78rem;font-weight:800;color:#1e293b;margin-bottom:8px">Dashboard</div>
+            <div class="mock-stat-grid">
+              <div class="mock-stat"><div class="n" style="color:#2563eb">120</div><div class="l">Total Users</div></div>
+              <div class="mock-stat"><div class="n" style="color:#16a34a">24</div><div class="l">Active Jobs</div></div>
+              <div class="mock-stat"><div class="n" style="color:#f59e0b">45</div><div class="l">Applications</div></div>
+              <div class="mock-stat"><div class="n" style="color:#dc2626">312</div><div class="l">Total Views</div></div>
+            </div>
+            <div style="font-size:0.68rem;font-weight:700;color:#475569;margin-bottom:6px">Jobs by Type</div>
+            <div class="mock-chart-placeholder">
+              <div class="mock-bar-chart" style="height:60px;background:#2563eb"></div>
+              <div class="mock-bar-chart" style="height:40px;background:#16a34a"></div>
+              <div class="mock-bar-chart" style="height:25px;background:#f59e0b"></div>
+              <div class="mock-bar-chart" style="height:50px;background:#7c3aed"></div>
+              <div class="mock-bar-chart" style="height:35px;background:#dc2626"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CLOSING ─────────────────────────────────────────────────────────────── -->
+<div class="cover" style="min-height:50vh;padding:60px 20px">
+  <div style="font-size:3rem;margin-bottom:16px">🎉</div>
+  <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:10px">End of Storyboard</h2>
+  <p style="opacity:0.7;margin-bottom:30px;font-size:0.95rem">JobPortal — Full-Stack Project | Apr 2026 – Jul 2026</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <a href="/index.html" style="background:white;color:#2563eb;padding:10px 24px;border-radius:8px;font-weight:700;text-decoration:none;font-size:0.9rem">🏠 View Live Site</a>
+    <a href="/erd.html" style="background:rgba(255,255,255,0.15);color:white;padding:10px 24px;border-radius:8px;font-weight:700;text-decoration:none;font-size:0.9rem">📊 ERD Diagram</a>
+    <a href="/usecase.html" style="background:rgba(255,255,255,0.15);color:white;padding:10px 24px;border-radius:8px;font-weight:700;text-decoration:none;font-size:0.9rem">🎯 Use Case</a>
+    <a href="/gantt.html" style="background:rgba(255,255,255,0.15);color:white;padding:10px 24px;border-radius:8px;font-weight:700;text-decoration:none;font-size:0.9rem">📅 Gantt Chart</a>
+  </div>
+</div>
+
+<button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+</body>
+</html>

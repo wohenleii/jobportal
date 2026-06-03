@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Use Case Diagram — JobPortal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 30px; }
+    h1 { text-align: center; color: #1e293b; margin-bottom: 6px; font-size: 1.8rem; }
+    .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 0.95rem; }
+
+    .diagram-wrapper {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+    }
+
+    svg { display: block; margin: 0 auto; }
+
+    /* Actor */
+    .actor-group text { font-size: 13px; font-weight: 600; fill: #1e293b; text-anchor: middle; }
+    .actor-body { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; }
+    .actor-head { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; }
+
+    /* System boundary */
+    .system-box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 8,4; rx: 16; }
+    .system-label { font-size: 15px; font-weight: 700; fill: #475569; text-anchor: middle; }
+
+    /* Use case ellipses */
+    .uc { fill: white; stroke-width: 2; }
+    .uc-student { stroke: #2563eb; }
+    .uc-employer { stroke: #16a34a; }
+    .uc-admin { stroke: #dc2626; }
+    .uc-shared { stroke: #7c3aed; }
+    .uc text { font-size: 11px; fill: #1e293b; text-anchor: middle; dominant-baseline: middle; }
+
+    /* Lines */
+    .assoc { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+    .include { stroke: #7c3aed; stroke-width: 1.5; stroke-dasharray: 5,3; fill: none; marker-end: url(#arrow-purple); }
+
+    /* Legend */
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    .legend-item { display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 14px; font-size: 0.82rem; color: #475569; }
+    .legend-color { width: 28px; height: 4px; border-radius: 2px; }
+    .legend-oval { width: 28px; height: 16px; border-radius: 50%; border: 2px solid; }
+
+    .btn { display: block; margin: 20px auto 0; background: #2563eb; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <h1>🎯 Use Case Diagram</h1>
+  <p class="subtitle">JobPortal System — Actor interactions and system use cases</p>
+
+  <div class="diagram-wrapper">
+    <svg width="1100" height="900" viewBox="0 0 1100 900" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+        </marker>
+        <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+        </marker>
+      </defs>
+
+      <!-- ── System Boundary ─────────────────────────────────────── -->
+      <rect x="200" y="40" width="720" height="820" rx="16" class="system-box"/>
+      <text x="560" y="72" class="system-label">« JobPortal System »</text>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- ACTORS (left side)                                        -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+
+      <!-- Student Actor -->
+      <g class="actor-group" transform="translate(80, 200)">
+        <circle cx="0" cy="-30" r="18" class="actor-head"/>
+        <line x1="0" y1="-12" x2="0" y2="30" stroke="#2563eb" stroke-width="2"/>
+        <line x1="-20" y1="5" x2="20" y2="5" stroke="#2563eb" stroke-width="2"/>
+        <line x1="0" y1="30" x2="-15" y2="55" stroke="#2563eb" stroke-width="2"/>
+        <line x1="0" y1="30" x2="15" y2="55" stroke="#2563eb" stroke-width="2"/>
+        <text x="0" y="75" fill="#2563eb">🎓 Student</text>
+      </g>
+
+      <!-- Employer Actor -->
+      <g class="actor-group" transform="translate(80, 480)">
+        <circle cx="0" cy="-30" r="18" class="actor-head" style="fill:#dcfce7;stroke:#16a34a"/>
+        <line x1="0" y1="-12" x2="0" y2="30" stroke="#16a34a" stroke-width="2"/>
+        <line x1="-20" y1="5" x2="20" y2="5" stroke="#16a34a" stroke-width="2"/>
+        <line x1="0" y1="30" x2="-15" y2="55" stroke="#16a34a" stroke-width="2"/>
+        <line x1="0" y1="30" x2="15" y2="55" stroke="#16a34a" stroke-width="2"/>
+        <text x="0" y="75" fill="#16a34a">🏢 Employer</text>
+      </g>
+
+      <!-- Admin Actor (right side) -->
+      <g class="actor-group" transform="translate(1020, 340)">
+        <circle cx="0" cy="-30" r="18" class="actor-head" style="fill:#fee2e2;stroke:#dc2626"/>
+        <line x1="0" y1="-12" x2="0" y2="30" stroke="#dc2626" stroke-width="2"/>
+        <line x1="-20" y1="5" x2="20" y2="5" stroke="#dc2626" stroke-width="2"/>
+        <line x1="0" y1="30" x2="-15" y2="55" stroke="#dc2626" stroke-width="2"/>
+        <line x1="0" y1="30" x2="15" y2="55" stroke="#dc2626" stroke-width="2"/>
+        <text x="0" y="75" fill="#dc2626">🛡️ Admin</text>
+      </g>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- SHARED USE CASES (top center)                             -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <g class="uc">
+        <ellipse cx="400" cy="120" rx="90" ry="28" class="uc-shared"/>
+        <text x="400" y="120">Register Account</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="620" cy="120" rx="80" ry="28" class="uc-shared"/>
+        <text x="620" y="120">Login / Logout</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="820" cy="120" rx="80" ry="28" class="uc-shared"/>
+        <text x="820" y="120">View Job Listings</text>
+      </g>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- STUDENT USE CASES                                         -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <g class="uc">
+        <ellipse cx="370" cy="220" rx="90" ry="28" class="uc-student"/>
+        <text x="370" y="220">Search &amp; Filter Jobs</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="600" cy="220" rx="80" ry="28" class="uc-student"/>
+        <text x="600" y="220">View Job Detail</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="820" cy="220" rx="80" ry="28" class="uc-student"/>
+        <text x="820" y="220">Apply for Job</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="370" cy="320" rx="90" ry="28" class="uc-student"/>
+        <text x="370" y="320">Bookmark Job</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="600" cy="320" rx="90" ry="28" class="uc-student"/>
+        <text x="600" y="320">View Bookmarks</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="820" cy="320" rx="90" ry="28" class="uc-student"/>
+        <text x="820" y="320">Track Applications</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="490" cy="420" rx="90" ry="28" class="uc-student"/>
+        <text x="490" y="420">Edit Profile</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="730" cy="420" rx="90" ry="28" class="uc-student"/>
+        <text x="730" y="420">Upload Resume URL</text>
+      </g>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- EMPLOYER USE CASES                                        -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <g class="uc">
+        <ellipse cx="380" cy="530" rx="90" ry="28" class="uc-employer"/>
+        <text x="380" y="530">Post New Job</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="600" cy="530" rx="90" ry="28" class="uc-employer"/>
+        <text x="600" y="530">Edit Job Listing</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="820" cy="530" rx="90" ry="28" class="uc-employer"/>
+        <text x="820" y="530">View Applicants</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="490" cy="620" rx="100" ry="28" class="uc-employer"/>
+        <text x="490" y="620">Update Application Status</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="750" cy="620" rx="90" ry="28" class="uc-employer"/>
+        <text x="750" y="620">Manage Company Profile</text>
+      </g>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- ADMIN USE CASES                                           -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <g class="uc">
+        <ellipse cx="380" cy="720" rx="90" ry="28" class="uc-admin"/>
+        <text x="380" y="720">Manage All Users</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="590" cy="720" rx="90" ry="28" class="uc-admin"/>
+        <text x="590" y="720">Manage All Jobs</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="800" cy="720" rx="90" ry="28" class="uc-admin"/>
+        <text x="800" y="720">View Analytics</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="490" cy="810" rx="100" ry="28" class="uc-admin"/>
+        <text x="490" y="810">Approve / Reject Jobs</text>
+      </g>
+      <g class="uc">
+        <ellipse cx="750" cy="810" rx="90" ry="28" class="uc-admin"/>
+        <text x="750" y="810">View Dashboard Stats</text>
+      </g>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- ASSOCIATION LINES — Student                               -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- Student → shared -->
+      <line x1="100" y1="200" x2="310" y2="120" class="assoc"/>
+      <line x1="100" y1="200" x2="540" y2="120" class="assoc"/>
+      <line x1="100" y1="200" x2="740" y2="120" class="assoc"/>
+      <!-- Student → own -->
+      <line x1="100" y1="220" x2="280" y2="220" class="assoc"/>
+      <line x1="100" y1="230" x2="520" y2="220" class="assoc"/>
+      <line x1="100" y1="240" x2="740" y2="220" class="assoc"/>
+      <line x1="100" y1="250" x2="280" y2="320" class="assoc"/>
+      <line x1="100" y1="255" x2="510" y2="320" class="assoc"/>
+      <line x1="100" y1="260" x2="730" y2="320" class="assoc"/>
+      <line x1="100" y1="265" x2="400" y2="420" class="assoc"/>
+      <line x1="100" y1="270" x2="640" y2="420" class="assoc"/>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- ASSOCIATION LINES — Employer                              -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <line x1="100" y1="480" x2="290" y2="530" class="assoc"/>
+      <line x1="100" y1="485" x2="510" y2="530" class="assoc"/>
+      <line x1="100" y1="490" x2="730" y2="530" class="assoc"/>
+      <line x1="100" y1="495" x2="390" y2="620" class="assoc"/>
+      <line x1="100" y1="500" x2="660" y2="620" class="assoc"/>
+      <!-- Employer also shares login/register -->
+      <line x1="100" y1="460" x2="540" y2="130" class="assoc" stroke-dasharray="4,3" opacity="0.4"/>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- ASSOCIATION LINES — Admin                                 -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <line x1="1020" y1="340" x2="900" y2="120" class="assoc"/>
+      <line x1="1020" y1="345" x2="900" y2="720" class="assoc"/>
+      <line x1="1020" y1="350" x2="900" y2="720" class="assoc"/>
+      <line x1="1020" y1="355" x2="680" y2="720" class="assoc"/>
+      <line x1="1020" y1="360" x2="470" y2="720" class="assoc"/>
+      <line x1="1020" y1="365" x2="590" y2="810" class="assoc"/>
+      <line x1="1020" y1="370" x2="840" y2="810" class="assoc"/>
+
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- SECTION LABELS                                            -->
+      <!-- ══════════════════════════════════════════════════════════ -->
+      <rect x="210" y="90" width="130" height="20" rx="4" fill="#ede9fe" opacity="0.7"/>
+      <text x="275" y="104" font-size="11" fill="#7c3aed" text-anchor="middle" font-weight="600">« Shared »</text>
+
+      <rect x="210" y="195" width="130" height="20" rx="4" fill="#dbeafe" opacity="0.7"/>
+      <text x="275" y="209" font-size="11" fill="#2563eb" text-anchor="middle" font-weight="600">« Student »</text>
+
+      <rect x="210" y="505" width="130" height="20" rx="4" fill="#dcfce7" opacity="0.7"/>
+      <text x="275" y="519" font-size="11" fill="#16a34a" text-anchor="middle" font-weight="600">« Employer »</text>
+
+      <rect x="210" y="695" width="130" height="20" rx="4" fill="#fee2e2" opacity="0.7"/>
+      <text x="275" y="709" font-size="11" fill="#dc2626" text-anchor="middle" font-weight="600">« Admin »</text>
+
+    </svg>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-oval" style="border-color:#7c3aed; background:#ede9fe"></div>
+        Shared (All Users)
+      </div>
+      <div class="legend-item">
+        <div class="legend-oval" style="border-color:#2563eb; background:#dbeafe"></div>
+        Student
+      </div>
+      <div class="legend-item">
+        <div class="legend-oval" style="border-color:#16a34a; background:#dcfce7"></div>
+        Employer
+      </div>
+      <div class="legend-item">
+        <div class="legend-oval" style="border-color:#dc2626; background:#fee2e2"></div>
+        Admin
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#94a3b8"></div>
+        Association
+      </div>
+    </div>
+
+    <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+</body>
+</html>

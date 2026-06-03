@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gantt Chart — JobPortal Project Timeline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 30px; }
+
+    h1 { text-align: center; color: #1e293b; font-size: 1.8rem; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.95rem; margin-bottom: 28px; }
+
+    .card {
+      background: white; border-radius: 16px; padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 1200px; margin: 0 auto; overflow-x: auto;
+    }
+
+    .summary {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 12px; margin-bottom: 28px;
+    }
+    .summary-card {
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 14px; text-align: center;
+    }
+    .summary-card .val { font-size: 1.6rem; font-weight: 800; }
+    .summary-card .lbl { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+    /* Grid layout: label col + 14 week cols */
+    .g-row {
+      display: grid;
+      grid-template-columns: 230px repeat(14, 1fr);
+      min-height: 36px;
+      align-items: center;
+    }
+
+    /* Month header */
+    .month-cell {
+      font-size: 0.72rem; font-weight: 700; color: white;
+      text-align: center; padding: 5px 2px; border-radius: 4px;
+    }
+
+    /* Week header */
+    .week-cell {
+      font-size: 0.68rem; color: #94a3b8; text-align: center;
+      padding: 3px 0; border-left: 1px dashed #e2e8f0;
+    }
+    .week-date {
+      font-size: 0.6rem; color: #cbd5e1; text-align: center;
+      padding: 2px 0; border-left: 1px dashed #e2e8f0;
+    }
+
+    /* Phase separator */
+    .phase-label {
+      font-size: 0.78rem; font-weight: 700; color: white;
+      padding: 5px 10px; border-radius: 6px; white-space: nowrap;
+    }
+    .phase-bg {
+      height: 28px; border-left: 1px dashed #e2e8f0; opacity: 0.25;
+    }
+
+    /* Task row */
+    .task-name {
+      font-size: 0.78rem; color: #334155;
+      padding: 0 8px 0 16px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .tag {
+      font-size: 0.62rem; padding: 1px 6px; border-radius: 10px;
+      margin-left: 4px; font-weight: 600; vertical-align: middle;
+    }
+
+    .grid-cell {
+      height: 36px; border-left: 1px dashed #e2e8f0;
+      position: relative;
+    }
+    .g-row:hover .grid-cell { background: #f8fafc; }
+
+    /* Bar */
+    .bar {
+      position: absolute; top: 7px; height: 22px;
+      border-radius: 6px; left: 2px;
+      display: flex; align-items: center;
+      font-size: 0.62rem; font-weight: 700; color: white;
+      overflow: hidden; white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+      z-index: 4;
+    }
+    .bar-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      background: rgba(255,255,255,0.28); border-radius: 6px;
+    }
+    .bar-text { position: relative; z-index: 1; padding: 0 7px; }
+
+    /* Today line */
+    .today-line {
+      position: absolute; top: 0; bottom: 0; width: 2px;
+      background: #ef4444; z-index: 10; left: 50%;
+    }
+    .today-tip {
+      position: absolute; top: -16px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem; color: #ef4444; font-weight: 700;
+      white-space: nowrap; background: white;
+      padding: 1px 4px; border-radius: 3px;
+      border: 1px solid #ef4444;
+    }
+
+    /* Milestone diamond */
+    .milestone {
+      position: absolute; top: 8px; left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 18px; height: 18px;
+      background: #1e293b; border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 5;
+    }
+
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      justify-content: center; margin-top: 24px;
+      padding-top: 18px; border-top: 1px solid #e2e8f0;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 7px;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 6px 12px;
+      font-size: 0.78rem; color: #475569;
+    }
+    .legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+
+    .btn {
+      display: block; margin: 20px auto 0;
+      background: #2563eb; color: white; border: none;
+      padding: 10px 28px; border-radius: 8px;
+      font-size: 0.9rem; cursor: pointer; font-weight: 600;
+    }
+    .btn:hover { background: #1d4ed8; }
+
+    @media print {
+      body { background: white; padding: 5px; }
+      .btn { display: none; }
+      .card { box-shadow: none; padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>📅 Project Gantt Chart</h1>
+<p class="subtitle">JobPortal Full-Stack Development &nbsp;|&nbsp; 20 April 2026 – 27 July 2026 &nbsp;(14 Weeks)</p>
+
+<div class="card">
+
+  <div class="summary">
+    <div class="summary-card">
+      <div class="val" style="color:#2563eb">14</div>
+      <div class="lbl">Total Weeks</div>
+    </div>
+    <div class="summary-card">
+      <div class="val" style="color:#16a34a">5</div>
+      <div class="lbl">Project Phases</div>
+    </div>
+    <div class="summary-card">
+      <div class="val" style="color:#f59e0b">18</div>
+      <div class="lbl">Tasks</div>
+    </div>
+    <div class="summary-card">
+      <div class="val" style="color:#dc2626">27 Jul</div>
+      <div class="lbl">Final Submission</div>
+    </div>
+  </div>
+
+  <div id="gantt"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div>Phase 1: Planning</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div>Phase 2: Design</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#16a34a"></div>Phase 3: Development</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Phase 4: Testing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Phase 5: Deployment</div>
+    <div class="legend-item">
+      <div style="width:14px;height:14px;background:#1e293b;transform:rotate(45deg);border-radius:2px"></div>
+      Milestone
+    </div>
+    <div class="legend-item">
+      <div style="width:3px;height:14px;background:#ef4444;border-radius:2px"></div>
+      Today (30 May)
+    </div>
+  </div>
+
+  <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<script>
+  // ── Project dates ─────────────────────────────────────────────────────────
+  // Week 1 starts: Apr 20, 2026
+  // Week 14 ends:  Jul 27, 2026
+  // Today: May 30, 2026 → Week 6 (Apr20=W1, Apr27=W2, May4=W3, May11=W4, May18=W5, May25=W6)
+  const TODAY_WEEK = 6;
+  const TOTAL_WEEKS = 14;
+
+  // Week start dates (for display)
+  const weekDates = [
+    'Apr 20','Apr 27','May 4','May 11','May 18','May 25',
+    'Jun 1','Jun 8','Jun 15','Jun 22','Jun 29',
+    'Jul 6','Jul 13','Jul 20'
+  ];
+
+  // Month spans (how many weeks each month covers in our 14-week range)
+  const monthSpans = [
+    { label: 'April 2026',  cols: 2, color: '#6366f1' },
+    { label: 'May 2026',    cols: 5, color: '#2563eb' },
+    { label: 'June 2026',   cols: 4, color: '#16a34a' },
+    { label: 'July 2026',   cols: 3, color: '#dc2626' },
+  ];
+
+  const tagStyle = {
+    'Done':        'background:#16a34a;color:white',
+    'In Progress': 'background:#f59e0b;color:white',
+    'Upcoming':    'background:#94a3b8;color:white',
+  };
+
+  // ── Phases & Tasks ────────────────────────────────────────────────────────
+  // start/end = week numbers (1-indexed)
+  const phases = [
+    {
+      name: '📋 Phase 1: Planning & Requirements',
+      color: '#6366f1', bg: '#eef2ff',
+      tasks: [
+        { name: 'Project Scoping & Objectives',   start:1, end:1, progress:100, tag:'Done' },
+        { name: 'Requirements Gathering',          start:1, end:2, progress:100, tag:'Done' },
+        { name: 'ERD & Use Case Diagrams',         start:2, end:2, progress:100, tag:'Done' },
+        { name: 'Tech Stack & Tools Decision',     start:2, end:2, progress:100, tag:'Done' },
+      ]
+    },
+    {
+      name: '🎨 Phase 2: UI/UX Design',
+      color: '#2563eb', bg: '#dbeafe',
+      tasks: [
+        { name: 'Wireframes & Page Mockups',       start:2, end:3, progress:100, tag:'Done' },
+        { name: 'Database Schema Design',          start:3, end:3, progress:100, tag:'Done' },
+        { name: 'Frontend HTML/CSS Bootstrap',     start:3, end:4, progress:100, tag:'Done' },
+      ]
+    },
+    {
+      name: '💻 Phase 3: Development',
+      color: '#16a34a', bg: '#dcfce7',
+      tasks: [
+        { name: 'Backend API (Express + MySQL)',   start:4, end:6,  progress:100, tag:'Done' },
+        { name: 'User Auth (JWT + bcrypt)',        start:4, end:5,  progress:100, tag:'Done' },
+        { name: 'Job Listings & Search/Filter',    start:5, end:7,  progress:100, tag:'Done' },
+        { name: 'Bookmark & Apply Features',       start:6, end:7,  progress:100, tag:'Done' },
+        { name: 'Admin Dashboard & Analytics',     start:7, end:8,  progress:80,  tag:'In Progress' },
+        { name: 'Employer Job Submission Form',    start:7, end:8,  progress:100, tag:'Done' },
+      ]
+    },
+    {
+      name: '🧪 Phase 4: Testing & Bug Fixes',
+      color: '#f59e0b', bg: '#fef3c7',
+      tasks: [
+        { name: 'Integration & API Testing',       start:9,  end:10, progress:30, tag:'In Progress' },
+        { name: 'UI Polish & Responsive Fixes',    start:10, end:11, progress:10, tag:'Upcoming' },
+        { name: 'User Acceptance Testing (UAT)',   start:11, end:12, progress:0,  tag:'Upcoming' },
+      ]
+    },
+    {
+      name: '🚀 Phase 5: Deployment & Submission',
+      color: '#dc2626', bg: '#fee2e2',
+      tasks: [
+        { name: 'Cloud DB Deployment (Aiven)',     start:8,  end:9,  progress:80, tag:'In Progress' },
+        { name: 'Final Documentation & Report',    start:12, end:13, progress:0,  tag:'Upcoming' },
+        { name: '🏁 Final Submission (27 Jul)',    start:14, end:14, progress:0,  tag:'Upcoming', milestone:true },
+      ]
+    },
+  ];
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function render() {
+    const el = document.getElementById('gantt');
+    let html = '';
+
+    // Month header
+    html += `<div class="g-row" style="margin-bottom:2px"><div></div>`;
+    monthSpans.forEach(m => {
+      for (let i = 0; i < m.cols; i++) {
+        const isFirst = i === 0, isLast = i === m.cols - 1;
+        const radius = isFirst && isLast ? '6px' : isFirst ? '6px 0 0 6px' : isLast ? '0 6px 6px 0' : '0';
+        const showLabel = i === Math.floor(m.cols / 2);
+        html += `<div class="month-cell" style="background:${m.color};border-radius:${radius}">${showLabel ? m.label : ''}</div>`;
+      }
+    });
+    html += `</div>`;
+
+    // Week number row
+    html += `<div class="g-row" style="margin-bottom:1px"><div style="font-size:0.7rem;color:#94a3b8;padding-left:4px">Week →</div>`;
+    for (let w = 1; w <= TOTAL_WEEKS; w++) {
+      html += `<div class="week-cell">W${w}</div>`;
+    }
+    html += `</div>`;
+
+    // Week date row
+    html += `<div class="g-row" style="margin-bottom:10px"><div></div>`;
+    weekDates.forEach(d => {
+      html += `<div class="week-date">${d}</div>`;
+    });
+    html += `</div>`;
+
+    // Phases
+    phases.forEach(phase => {
+      // Phase header
+      html += `<div class="g-row" style="margin:6px 0 3px">`;
+      html += `<div class="phase-label" style="background:${phase.color}">${phase.name}</div>`;
+      for (let w = 1; w <= TOTAL_WEEKS; w++) {
+        html += `<div class="phase-bg" style="background:${phase.color}"></div>`;
+      }
+      html += `</div>`;
+
+      // Tasks
+      phase.tasks.forEach(task => {
+        const span = task.end - task.start + 1;
+        html += `<div class="g-row">`;
+        html += `<div class="task-name">${task.name} <span class="tag" style="${tagStyle[task.tag]}">${task.tag}</span></div>`;
+
+        for (let w = 1; w <= TOTAL_WEEKS; w++) {
+          const isToday = w === TODAY_WEEK;
+          const inRange = w >= task.start && w <= task.end;
+          const isStart = w === task.start;
+
+          let cellContent = '';
+
+          // Today line
+          if (isToday) {
+            cellContent += `<div class="today-line">${w === task.start || (!inRange) ? `<span class="today-tip">Today</span>` : ''}</div>`;
+          }
+
+          // Bar starts here
+          if (isStart) {
+            if (task.milestone) {
+              cellContent += `<div class="milestone"></div>`;
+            } else {
+              const widthExpr = `calc(${span * 100}% - 4px)`;
+              cellContent += `
+                <div class="bar" style="background:${phase.color};width:${widthExpr}">
+                  <div class="bar-fill" style="width:${task.progress}%"></div>
+                  <span class="bar-text">${task.progress}%</span>
+                </div>`;
+            }
+          }
+
+          html += `<div class="grid-cell">${cellContent}</div>`;
+        }
+        html += `</div>`;
+      });
+    });
+
+    el.innerHTML = html;
+  }
+
+  render();
+</script>
+</body>
+</html>

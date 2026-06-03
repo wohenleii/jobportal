@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERD Diagram — JobPortal</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; padding: 30px; }
+    h1 { text-align: center; color: #1e293b; margin-bottom: 6px; font-size: 1.8rem; }
+    .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 0.95rem; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .mermaid { display: flex; justify-content: center; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center; margin-top: 24px;
+      padding-top: 20px; border-top: 1px solid #e2e8f0;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap-8px;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; color: #475569;
+      gap: 8px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .btn {
+      display: block; margin: 20px auto 0;
+      background: #2563eb; color: white; border: none;
+      padding: 10px 28px; border-radius: 8px; font-size: 0.9rem;
+      cursor: pointer; font-weight: 600;
+    }
+    .btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <h1>📊 Entity Relationship Diagram</h1>
+  <p class="subtitle">JobPortal Database — Table relationships and attributes</p>
+
+  <div class="card">
+    <div class="mermaid">
+erDiagram
+    USERS {
+        int id PK
+        varchar name
+        varchar email
+        varchar password
+        enum role
+        varchar avatar
+        text bio
+        varchar skills
+        varchar resume_url
+        timestamp created_at
+    }
+
+    EMPLOYERS {
+        int id PK
+        int user_id FK
+        varchar company_name
+        varchar company_logo
+        varchar company_website
+        text company_description
+        varchar industry
+        varchar location
+        timestamp created_at
+    }
+
+    JOBS {
+        int id PK
+        int employer_id FK
+        varchar title
+        text description
+        text requirements
+        varchar location
+        enum job_type
+        varchar category
+        decimal salary_min
+        decimal salary_max
+        date deadline
+        enum status
+        int views
+        timestamp created_at
+    }
+
+    BOOKMARKS {
+        int id PK
+        int user_id FK
+        int job_id FK
+        timestamp created_at
+    }
+
+    APPLICATIONS {
+        int id PK
+        int user_id FK
+        int job_id FK
+        text cover_letter
+        enum status
+        timestamp applied_at
+    }
+
+    JOB_VIEWS {
+        int id PK
+        int job_id FK
+        int user_id FK
+        varchar ip_address
+        timestamp viewed_at
+    }
+
+    USERS ||--o{ EMPLOYERS : "has profile"
+    USERS ||--o{ BOOKMARKS : "saves"
+    USERS ||--o{ APPLICATIONS : "submits"
+    USERS ||--o{ JOB_VIEWS : "views"
+    EMPLOYERS ||--o{ JOBS : "posts"
+    JOBS ||--o{ BOOKMARKS : "bookmarked in"
+    JOBS ||--o{ APPLICATIONS : "receives"
+    JOBS ||--o{ JOB_VIEWS : "tracked in"
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:#2563eb"></div> PK = Primary Key</div>
+      <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> FK = Foreign Key</div>
+      <div class="legend-item"><div class="dot" style="background:#16a34a"></div> ||--o{ = One to Many</div>
+      <div class="legend-item"><div class="dot" style="background:#7c3aed"></div> 6 Tables Total</div>
+    </div>
+
+    <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'default', er: { diagramPadding: 30 } });
+  </script>
+</body>
+</html>
