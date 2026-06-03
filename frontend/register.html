@@ -80,7 +80,12 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
 <script>
-  if (api.isLoggedIn()) window.location.href = '/index.html';
+  if (api.isLoggedIn()) {
+    const u = api.getUser();
+    if (u && u.role === 'employer') window.location.href = '/employer.html';
+    else if (u && u.role === 'admin') window.location.href = '/admin.html';
+    else window.location.href = '/index.html';
+  }
 
   // Pre-select role from URL param
   const urlRole = new URLSearchParams(window.location.search).get('role');
@@ -142,7 +147,10 @@
     try {
       await api.register({ name, email, password, role, company_name });
       showAlert('Account created! Redirecting...', 'success');
-      setTimeout(() => window.location.href = '/index.html', 1000);
+      setTimeout(() => {
+        if (role === 'employer') window.location.href = '/employer.html';
+        else window.location.href = '/index.html';
+      }, 1000);
     } catch (err) {
       showAlert(err.message || 'Registration failed.');
       btn.disabled = false;

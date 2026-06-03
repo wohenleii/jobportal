@@ -237,6 +237,7 @@ function badgeClass(type) {
     'full-time': 'badge-full-time',
     'part-time': 'badge-part-time',
     'internship': 'badge-internship',
+    'short-term': 'badge-internship',
     'contract': 'badge-contract',
     'remote': 'badge-remote',
   };

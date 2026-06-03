@@ -81,9 +81,9 @@ router.get('/', async (req, res) => {
 // GET /api/jobs/my — employer's own jobs with application counts
 router.get('/my', authenticate, requireEmployer, async (req, res) => {
   try {
-    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ?', [req.user.id]);
+    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1', [req.user.id]);
     if (empRows.length === 0) {
-      return res.status(400).json({ success: false, message: 'Employer profile not found.' });
+      return res.json({ success: true, jobs: [] });
     }
     const [jobs] = await db.query(
       `SELECT j.*, e.company_name,
@@ -157,7 +157,7 @@ router.post('/', authenticate, requireEmployer, async (req, res) => {
   }
 
   try {
-    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ?', [req.user.id]);
+    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1', [req.user.id]);
     if (empRows.length === 0) {
       return res.status(400).json({ success: false, message: 'Employer profile not found.' });
     }
