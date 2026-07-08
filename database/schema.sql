@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   description TEXT NOT NULL,
   requirements TEXT DEFAULT NULL,
   location VARCHAR(150) NOT NULL,
-  job_type ENUM('full-time', 'part-time', 'internship', 'contract', 'remote') DEFAULT 'full-time',
+  job_type ENUM('full-time', 'part-time', 'short-term', 'contract', 'remote') DEFAULT 'full-time',
   category VARCHAR(100) DEFAULT NULL,
   salary_min DECIMAL(10,2) DEFAULT NULL,
   salary_max DECIMAL(10,2) DEFAULT NULL,

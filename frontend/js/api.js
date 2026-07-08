@@ -1,7 +1,7 @@
 /**
  * API utility — centralizes all fetch calls to the backend.
  */
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 const api = {
   /** Get stored JWT token */
@@ -115,6 +115,18 @@ const api = {
     return this.get('/jobs/categories', false);
   },
 
+  async getPublicStats() {
+    return this.get('/jobs/stats', false);
+  },
+
+  async getCompanies() {
+    return this.get('/jobs/companies', false);
+  },
+
+  async smartSearch(query) {
+    return this.post('/jobs/smart-search', { query }, false);
+  },
+
   // ── Bookmarks ─────────────────────────────────────────────────────────
   async getBookmarks() {
     return this.get('/bookmarks');
@@ -224,10 +236,10 @@ function showToast(message, type = 'success') {
 
 function formatSalary(min, max) {
   if (!min && !max) return 'Salary not specified';
-  const fmt = n => n >= 1000 ? `$${(n/1000).toFixed(0)}k` : `$${n}/hr`;
-  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-  if (min) return `From ${fmt(min)}`;
-  return `Up to ${fmt(max)}`;
+  const fmt = n => `$${Number(n).toLocaleString()}`;
+  if (min && max) return `${fmt(min)} – ${fmt(max)}/mo`;
+  if (min) return `From ${fmt(min)}/mo`;
+  return `Up to ${fmt(max)}/mo`;
 }
 
 function timeAgo(dateStr) {
@@ -244,7 +256,7 @@ function badgeClass(type) {
   const map = {
     'full-time': 'badge-full-time',
     'part-time': 'badge-part-time',
-    'short-term': 'badge-internship',
+    'short-term': 'badge-short-term',
     'contract': 'badge-contract',
     'remote': 'badge-remote',
   };
@@ -263,11 +275,12 @@ function updateNavAuth() {
           👤 ${user.name}
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="/profile.html">My Profile</a></li>
-          ${user.role === 'admin' ? '<li><a class="dropdown-item" href="/admin.html">Admin Dashboard</a></li>' : ''}
-          ${user.role === 'employer' ? '<li><a class="dropdown-item" href="/post-job.html">Post a Job</a></li>' : ''}
+          <li><a class="dropdown-item" href="/profile.html"><i class="bi bi-person me-2"></i>My Profile</a></li>
+          <li><a class="dropdown-item" href="/profile.html#bookmarks" onclick="localStorage.setItem('profileTab','bookmarks')"><i class="bi bi-bookmark me-2"></i>Saved Jobs</a></li>
+          ${user.role === 'admin' ? '<li><a class="dropdown-item" href="/admin.html"><i class="bi bi-shield-lock me-2"></i>Admin Dashboard</a></li>' : ''}
+          ${user.role === 'employer' ? '<li><a class="dropdown-item" href="/employer.html"><i class="bi bi-briefcase me-2"></i>Employer Dashboard</a></li><li><a class="dropdown-item" href="/post-job.html"><i class="bi bi-plus-circle me-2"></i>Post a Job</a></li>' : ''}
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item text-danger" href="#" onclick="api.logout()">Logout</a></li>
+          <li><a class="dropdown-item text-danger" href="#" onclick="api.logout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
         </ul>
       </li>
     `;

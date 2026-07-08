@@ -7,10 +7,45 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .smart-search-wrap { position: relative; }
+    .smart-search-wrap .ai-badge {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+      color: #fff; font-size: .65rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 6px; pointer-events: none; letter-spacing:.5px;
+    }
+    .smart-search-wrap input { padding-left: 52px !important; }
+    .stat-item .number { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+    .stat-item .label  { font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing:.5px; }
+    .filter-section-title {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: #94a3b8; margin-bottom: 8px; margin-top: 16px;
+    }
+    .salary-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .salary-pill {
+      font-size: .72rem; padding: 3px 9px; border-radius: 20px;
+      border: 1px solid #e2e8f0; cursor: pointer; background: #f8fafc;
+      transition: all .15s; white-space: nowrap;
+    }
+    .salary-pill:hover, .salary-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .job-card { position: relative; overflow: visible; }
+    .job-card-header { display: flex; align-items: flex-start; gap: 14px; }
+    .job-card-body { flex: 1; min-width: 0; }
+    .job-card-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .job-card-meta .job-title-wrap { flex: 1; min-width: 0; }
+    .job-card-meta .job-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; padding-right: 32px; }
+    .bookmark-btn { position: absolute; top: 16px; right: 14px; background: none; border: none; color: #94a3b8; font-size: 1.15rem; cursor: pointer; transition: color .2s; line-height: 1; padding: 2px; }
+    .bookmark-btn.active, .bookmark-btn:hover { color: #f59e0b; }
+    .ai-reason { font-size: .72rem; color: #6366f1; background: #eef2ff; border-radius: 8px; padding: 4px 10px; margin-top: 6px; display: inline-block; }
+    #smartBanner { background: linear-gradient(135deg,#eef2ff,#f5f3ff); border: 1px solid #c7d2fe; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: none; }
+    #smartBanner.show { display: flex; align-items: center; gap: 8px; }
+    .results-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    @media (max-width: 576px) { .job-card-meta { flex-wrap: wrap; } .job-card-meta .job-right { padding-right: 36px; } }
+  </style>
 </head>
 <body>
 
-<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
   <div class="container">
     <a class="navbar-brand" href="/index.html">Job<span>Portal</span></a>
@@ -27,93 +62,129 @@
   </div>
 </nav>
 
-<!-- Page Header -->
 <div class="bg-primary text-white py-4">
   <div class="container">
-    <h1 class="fw-bold mb-2">Browse Jobs</h1>
-    <div class="input-group" style="max-width:500px">
-      <input type="text" class="form-control" id="searchInput" placeholder="Search jobs, companies..." />
-      <button class="btn btn-warning fw-bold" onclick="applyFilters()">
-        <i class="bi bi-search"></i> Search
+    <h1 class="fw-bold mb-1">Browse Jobs</h1>
+    <p class="opacity-75 small mb-3">Describe your interests or search by keyword — our smart search finds the best matches.</p>
+    <div class="d-flex gap-2 flex-wrap" style="max-width:640px">
+      <div class="smart-search-wrap flex-grow-1">
+        <span class="ai-badge">AI</span>
+        <input type="text" class="form-control" id="searchInput" placeholder='e.g. "I enjoy video editing" or search job title...' />
+      </div>
+      <button class="btn btn-warning fw-bold px-4" onclick="handleSearch()">
+        <i class="bi bi-search me-1"></i>Search
       </button>
+    </div>
+    <div class="mt-2">
+      <small class="opacity-60"><i class="bi bi-lightbulb me-1"></i>Try: "I like helping people" · "I enjoy coding" · "Marketing & social media"</small>
     </div>
   </div>
 </div>
 
-<!-- Stats Bar -->
 <div class="stats-bar">
   <div class="container">
-    <div class="row text-center">
-      <div class="col-3 stat-item">
-        <div class="number" id="statJobs">—</div>
-        <div class="label">Active Jobs</div>
-      </div>
-      <div class="col-3 stat-item">
-        <div class="number" id="statCompanies">—</div>
-        <div class="label">Companies</div>
-      </div>
-      <div class="col-3 stat-item">
-        <div class="number" id="statUsers">—</div>
-        <div class="label">Job Seekers</div>
-      </div>
-      <div class="col-3 stat-item">
-        <div class="number" id="statApps">—</div>
-        <div class="label">Applications</div>
-      </div>
+    <div class="row text-center" id="statsBar">
+      <div class="col-3 stat-item"><div class="number" id="statJobs">—</div><div class="label">Jobs Available</div></div>
+      <div class="col-3 stat-item"><div class="number" id="statCompanies">—</div><div class="label">Companies Hiring</div></div>
+      <div class="col-3 stat-item"><div class="number" id="statShortTerm">—</div><div class="label">Short Term</div></div>
+      <div class="col-3 stat-item"><div class="number" id="statPartTime">—</div><div class="label">Part-time</div></div>
     </div>
   </div>
 </div>
 
 <div class="container py-4">
   <div class="row g-4">
-
-    <!-- Filters Sidebar -->
     <div class="col-lg-3">
       <div class="filter-card">
         <h6><i class="bi bi-funnel me-2"></i>Filters</h6>
 
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Job Type</label>
-          <div id="jobTypeFilters">
-            <div class="form-check"><input class="form-check-input" type="checkbox" value="full-time" id="ft"><label class="form-check-label small" for="ft">Full-time</label></div>
-            <div class="form-check"><input class="form-check-input" type="checkbox" value="part-time" id="pt"><label class="form-check-label small" for="pt">Part-time</label></div>
-            <div class="form-check"><input class="form-check-input" type="checkbox" value="short-term" id="intern"><label class="form-check-label small" for="intern">Short Term Programme</label></div>
-            <div class="form-check"><input class="form-check-input" type="checkbox" value="contract" id="contract"><label class="form-check-label small" for="contract">Contract</label></div>
-            <div class="form-check"><input class="form-check-input" type="checkbox" value="remote" id="remote"><label class="form-check-label small" for="remote">Remote</label></div>
-          </div>
+        <div class="filter-section-title">Job Type</div>
+        <div id="jobTypeFilters">
+          <div class="form-check"><input class="form-check-input" type="checkbox" value="full-time" id="ft"><label class="form-check-label small" for="ft">Full-time</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" value="part-time" id="pt"><label class="form-check-label small" for="pt">Part-time</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" value="short-term" id="intern"><label class="form-check-label small" for="intern">Short Term Programme</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" value="contract" id="contract"><label class="form-check-label small" for="contract">Contract</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" value="remote" id="remote"><label class="form-check-label small" for="remote">Remote</label></div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Category</label>
-          <select class="form-select form-select-sm" id="categoryFilter">
-            <option value="">All Categories</option>
-          </select>
+        <div class="filter-section-title">Category</div>
+        <select class="form-select form-select-sm" id="categoryFilter" onchange="applyFilters()">
+          <option value="">All Categories</option>
+          <option value="IT">IT</option>
+          <option value="Media">Media</option>
+          <option value="Design">Design</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Finance">Finance</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Education">Education</option>
+          <option value="Sales">Sales</option>
+          <option value="Customer Service">Customer Service</option>
+          <option value="Hospitality">Hospitality</option>
+          <option value="Logistics">Logistics</option>
+          <option value="Admin">Admin</option>
+          <option value="F&B">F&B</option>
+          <option value="Retail">Retail</option>
+          <option value="Real Estate">Real Estate</option>
+          <option value="Others">Others</option>
+        </select>
+
+        <div class="filter-section-title">Location (Region)</div>
+        <select class="form-select form-select-sm" id="locationFilter" onchange="applyFilters()">
+          <option value="">All Regions</option>
+          <option value="north">North</option>
+          <option value="south">South</option>
+          <option value="east">East</option>
+          <option value="west">West</option>
+          <option value="central">Central</option>
+          <option value="remote">Remote</option>
+          <option value="hybrid">Hybrid</option>
+          <option value="islandwide">Islandwide</option>
+        </select>
+
+        <div class="filter-section-title">Company</div>
+        <select class="form-select form-select-sm" id="companyFilter" onchange="applyFilters()">
+          <option value="">All Companies</option>
+        </select>
+
+        <div class="filter-section-title">Salary Range ($/month)</div>
+        <div class="salary-pills" id="salaryPills">
+          <span class="salary-pill active" data-min="" data-max="">Any</span>
+          <span class="salary-pill" data-min="0" data-max="800">Under $800</span>
+          <span class="salary-pill" data-min="800" data-max="975">$800–$975</span>
+          <span class="salary-pill" data-min="975" data-max="1200">$975–$1,200</span>
+          <span class="salary-pill" data-min="1200" data-max="1600">$1,200–$1,600</span>
+          <span class="salary-pill" data-min="1600" data-max="2500">$1,600–$2,500</span>
+          <span class="salary-pill" data-min="2500" data-max="4000">$2,500–$4,000</span>
+          <span class="salary-pill" data-min="4000" data-max="">$4,000+</span>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Location</label>
-          <input type="text" class="form-control form-control-sm" id="locationFilter" placeholder="City, state..." />
+        <div class="d-grid gap-2 mt-3">
+          <button class="btn btn-primary btn-sm" onclick="applyFilters()">Apply Filters</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">Clear All</button>
         </div>
-
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Min Salary ($)</label>
-          <input type="number" class="form-control form-control-sm" id="salaryMin" placeholder="e.g. 50000" />
-        </div>
-
-        <button class="btn btn-primary w-100 btn-sm" onclick="applyFilters()">Apply Filters</button>
-        <button class="btn btn-outline-secondary w-100 btn-sm mt-2" onclick="clearFilters()">Clear All</button>
       </div>
     </div>
 
-    <!-- Job Listings -->
     <div class="col-lg-9">
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div id="smartBanner">
+        <span style="font-size:1.1rem">✨</span>
+        <div>
+          <strong style="color:#4f46e5">AI Smart Search</strong>
+          <span class="text-muted small ms-2" id="smartBannerText"></span>
+          <a href="#" class="ms-3 small text-primary" onclick="clearSmartSearch();loadJobs();return false;">Clear AI results</a>
+        </div>
+      </div>
+      <div class="results-row mb-3">
         <span id="resultsCount" class="text-muted small"></span>
         <select class="form-select form-select-sm w-auto" id="sortSelect" onchange="applyFilters()">
-          <option value="">Sort: Newest</option>
+          <option value="newest">Sort: Newest</option>
+          <option value="salary_high">Highest Salary</option>
+          <option value="salary_low">Lowest Salary</option>
+          <option value="alpha">Alphabetical (A–Z)</option>
+          <option value="closing">Closing Soon</option>
         </select>
       </div>
-
       <div id="jobsList"></div>
       <div id="pagination" class="d-flex justify-content-center mt-4"></div>
     </div>
@@ -127,9 +198,7 @@
       <div class="modal-header border-0 pb-0">
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="jobModalBody">
-        <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
-      </div>
+      <div class="modal-body" id="jobModalBody"></div>
     </div>
   </div>
 </div>
@@ -160,276 +229,290 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
 <script>
-  updateNavAuth();
+/* ═══════════════════════════════════════════════════════
+   SINGLE SCRIPT BLOCK — all JS for jobs.html
+   ═══════════════════════════════════════════════════════ */
 
-  let currentPage = 1;
-  let currentJobId = null;
+updateNavAuth();
 
-  // Read URL params on load
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('search')) document.getElementById('searchInput').value = urlParams.get('search');
-  if (urlParams.get('category')) {
-    // Will be set after categories load
-  }
-  if (urlParams.get('id')) {
-    openJobModal(urlParams.get('id'));
-  }
+// ── State ──────────────────────────────────────────────
+let currentPage   = 1;
+let currentJobId  = null;
+let isSmartMode   = false;
+let activeSalMin  = '';
+let activeSalMax  = '';
 
-  async function loadCategories() {
-    try {
-      const data = await api.getCategories();
-      const sel = document.getElementById('categoryFilter');
-      data.categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        if (urlParams.get('category') === cat) opt.selected = true;
-        sel.appendChild(opt);
-      });
-    } catch (_) {}
-  }
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('search')) document.getElementById('searchInput').value = urlParams.get('search');
 
-  function getFilters() {
-    const types = [...document.querySelectorAll('#jobTypeFilters input:checked')].map(i => i.value);
-    return {
-      search: document.getElementById('searchInput').value.trim(),
-      job_type: types.join(','),
-      category: document.getElementById('categoryFilter').value,
-      location: document.getElementById('locationFilter').value.trim(),
-      salary_min: document.getElementById('salaryMin').value,
-      page: currentPage,
-      limit: 10,
-    };
-  }
-
-  function applyFilters() {
-    currentPage = 1;
-    loadJobs();
-  }
-
-  function clearFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('categoryFilter').value = '';
-    document.getElementById('locationFilter').value = '';
-    document.getElementById('salaryMin').value = '';
-    document.querySelectorAll('#jobTypeFilters input').forEach(i => i.checked = false);
+// ── Salary pills ───────────────────────────────────────
+document.querySelectorAll('.salary-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.salary-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeSalMin = pill.dataset.min;
+    activeSalMax = pill.dataset.max;
     applyFilters();
-  }
-
-  async function loadJobs() {
-    const container = document.getElementById('jobsList');
-    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-
-    try {
-      const filters = getFilters();
-      // Remove empty values
-      Object.keys(filters).forEach(k => !filters[k] && delete filters[k]);
-      const data = await api.getJobs(filters);
-
-      document.getElementById('resultsCount').textContent =
-        `${data.pagination.total} job${data.pagination.total !== 1 ? 's' : ''} found`;
-
-      if (!data.jobs.length) {
-        container.innerHTML = `
-          <div class="text-center py-5">
-            <div style="font-size:4rem">🔍</div>
-            <h5 class="mt-3">No jobs found</h5>
-            <p class="text-muted">Try adjusting your search or filters.</p>
-          </div>`;
-        document.getElementById('pagination').innerHTML = '';
-        return;
-      }
-
-      container.innerHTML = data.jobs.map(job => `
-        <div class="job-card mb-3">
-          <button class="bookmark-btn ${api.isLoggedIn() ? '' : 'd-none'}" onclick="toggleBookmark(event, ${job.id}, this)" data-job-id="${job.id}">
-            <i class="bi bi-bookmark"></i>
-          </button>
-          <div class="d-flex align-items-start gap-3">
-            <div class="company-logo-placeholder flex-shrink-0">${job.company_name.charAt(0)}</div>
-            <div class="flex-grow-1">
-              <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                <div>
-                  <a href="#" class="job-title" onclick="openJobModal(${job.id}); return false;">${job.title}</a>
-                  <div class="company-name mt-1">${job.company_name} · <i class="bi bi-geo-alt"></i> ${job.location}</div>
-                </div>
-                <div class="text-end">
-                  <div class="fw-semibold text-success small">${formatSalary(job.salary_min, job.salary_max)}</div>
-                  <div class="text-muted small">${timeAgo(job.created_at)}</div>
-                </div>
-              </div>
-              <div class="d-flex flex-wrap gap-2 mt-2">
-                <span class="badge-type ${badgeClass(job.job_type)}">${job.job_type}</span>
-                ${job.category ? `<span class="badge bg-light text-secondary">${job.category}</span>` : ''}
-                <span class="badge bg-light text-secondary"><i class="bi bi-eye"></i> ${job.views} views</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      renderPagination(data.pagination);
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-danger">Failed to load jobs: ${err.message}</div>`;
-    }
-  }
-
-  function renderPagination({ page, pages }) {
-    if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
-    let html = '<nav><ul class="pagination">';
-    html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">
-      <a class="page-link" href="#" onclick="goPage(${page-1});return false;">‹</a></li>`;
-    for (let i = 1; i <= pages; i++) {
-      html += `<li class="page-item ${i === page ? 'active' : ''}">
-        <a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a></li>`;
-    }
-    html += `<li class="page-item ${page === pages ? 'disabled' : ''}">
-      <a class="page-link" href="#" onclick="goPage(${page+1});return false;">›</a></li>`;
-    html += '</ul></nav>';
-    document.getElementById('pagination').innerHTML = html;
-  }
-
-  function goPage(p) {
-    currentPage = p;
-    loadJobs();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  async function openJobModal(jobId) {
-    currentJobId = jobId;
-    const modal = new bootstrap.Modal(document.getElementById('jobModal'));
-    document.getElementById('jobModalBody').innerHTML =
-      '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
-    modal.show();
-
-    try {
-      const data = await api.getJob(jobId);
-      const job = data.job;
-      const user = api.getUser();
-      const canApply = user && user.role === 'student';
-
-      document.getElementById('jobModalBody').innerHTML = `
-        <div class="d-flex align-items-start gap-3 mb-4">
-          <div class="company-logo-placeholder" style="width:64px;height:64px;font-size:1.5rem">${job.company_name.charAt(0)}</div>
-          <div>
-            <h4 class="fw-bold mb-1">${job.title}</h4>
-            <div class="text-muted">${job.company_name}</div>
-            <div class="d-flex flex-wrap gap-2 mt-2">
-              <span class="badge-type ${badgeClass(job.job_type)}">${job.job_type}</span>
-              <span class="badge bg-light text-secondary"><i class="bi bi-geo-alt"></i> ${job.location}</span>
-              ${job.category ? `<span class="badge bg-light text-secondary">${job.category}</span>` : ''}
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-3 mb-4">
-          <div class="col-sm-6">
-            <div class="p-3 bg-light rounded-3">
-              <div class="small text-muted">Salary</div>
-              <div class="fw-semibold text-success">${formatSalary(job.salary_min, job.salary_max)}</div>
-            </div>
-          </div>
-          <div class="col-sm-6">
-            <div class="p-3 bg-light rounded-3">
-              <div class="small text-muted">Deadline</div>
-              <div class="fw-semibold">${job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Open'}</div>
-            </div>
-          </div>
-        </div>
-
-        <h6 class="fw-bold">Job Description</h6>
-        <p class="text-muted">${job.description}</p>
-
-        ${job.requirements ? `<h6 class="fw-bold mt-3">Requirements</h6><p class="text-muted">${job.requirements}</p>` : ''}
-
-        <h6 class="fw-bold mt-3">About ${job.company_name}</h6>
-        <p class="text-muted">${job.company_description || 'No company description available.'}</p>
-
-        <div class="d-flex gap-2 mt-4">
-          ${canApply ? `<button class="btn btn-primary fw-bold" onclick="openApplyModal()">Apply Now</button>` : ''}
-          ${!user ? `<a href="/login.html" class="btn btn-primary fw-bold">Login to Apply</a>` : ''}
-          ${user && api.isLoggedIn() ? `
-            <button class="btn btn-outline-warning" onclick="toggleBookmark(event, ${job.id}, this)">
-              <i class="bi bi-bookmark"></i> Bookmark
-            </button>` : ''}
-        </div>
-      `;
-    } catch (err) {
-      document.getElementById('jobModalBody').innerHTML =
-        `<div class="alert alert-danger">Failed to load job details.</div>`;
-    }
-  }
-
-  function openApplyModal() {
-    bootstrap.Modal.getInstance(document.getElementById('jobModal')).hide();
-    setTimeout(() => new bootstrap.Modal(document.getElementById('applyModal')).show(), 300);
-  }
-
-  async function submitApplication() {
-    if (!api.isLoggedIn()) { window.location.href = '/login.html'; return; }
-    const coverLetter = document.getElementById('coverLetter').value;
-    const btn = document.getElementById('submitApplyBtn');
-    const alertEl = document.getElementById('applyAlert');
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
-
-    try {
-      await api.applyJob(currentJobId, coverLetter);
-      alertEl.className = 'alert alert-success';
-      alertEl.textContent = '✅ Application submitted successfully!';
-      alertEl.classList.remove('d-none');
-      btn.textContent = 'Applied!';
-      setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('applyModal')).hide(), 2000);
-    } catch (err) {
-      alertEl.className = 'alert alert-danger';
-      alertEl.textContent = err.message;
-      alertEl.classList.remove('d-none');
-      btn.disabled = false;
-      btn.textContent = 'Submit Application';
-    }
-  }
-
-  async function toggleBookmark(e, jobId, btn) {
-    e.stopPropagation();
-    if (!api.isLoggedIn()) { window.location.href = '/login.html'; return; }
-    const icon = btn.querySelector('i') || btn;
-    const isBookmarked = icon.classList.contains('bi-bookmark-fill');
-
-    try {
-      if (isBookmarked) {
-        await api.removeBookmark(jobId);
-        icon.className = 'bi bi-bookmark';
-        btn.classList.remove('active');
-        showToast('Bookmark removed', 'info');
-      } else {
-        await api.addBookmark(jobId);
-        icon.className = 'bi bi-bookmark-fill';
-        btn.classList.add('active');
-        showToast('Job bookmarked!', 'success');
-      }
-    } catch (err) {
-      showToast(err.message, 'danger');
-    }
-  }
-
-  // Init
-  loadCategories();
-  loadJobs();
-  async function loadStats() {
-    try {
-      const data = await api.getAdminStats();
-      document.getElementById('statJobs').textContent = data.stats.activeJobs;
-      document.getElementById('statCompanies').textContent = data.stats.totalEmployers;
-      document.getElementById('statUsers').textContent = data.stats.totalUsers;
-      document.getElementById('statApps').textContent = data.stats.totalApplications;
-    } catch (_) {}
-  }
-  loadStats();
-
-  document.getElementById('searchInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') applyFilters();
   });
+});
+
+// ── Search ─────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSearch();
+});
+
+function handleSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) { clearSmartSearch(); loadJobs(); return; }
+  const isAI = q.length > 20 || /i (like|enjoy|love|am|want|prefer|good at)|help|creative|organis|video|social|coding|teaching|finance/i.test(q);
+  if (isAI) { doSmartSearch(q); } else { clearSmartSearch(); currentPage = 1; loadJobs(); }
+}
+
+async function doSmartSearch(query) {
+  const container = document.getElementById('jobsList');
+  container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted small">Finding best matches…</p></div>';
+  document.getElementById('smartBanner').classList.add('show');
+  document.getElementById('pagination').innerHTML = '';
+  isSmartMode = true;
+  try {
+    const data = await api.smartSearch(query);
+    document.getElementById('smartBannerText').textContent = data.isFallback
+      ? 'No exact matches — showing closest alternatives.'
+      : `Found ${data.total} job${data.total !== 1 ? 's' : ''} matching your description.`;
+    document.getElementById('resultsCount').textContent = `${data.total} result${data.total !== 1 ? 's' : ''} (AI matched)`;
+    if (!data.jobs.length) {
+      container.innerHTML = `<div class="text-center py-5"><div style="font-size:3rem">🤔</div><h5 class="mt-3">No matches found</h5><p class="text-muted">Try rephrasing or use a keyword.</p></div>`;
+      return;
+    }
+    renderJobCards(data.jobs, true);
+  } catch (err) {
+    container.innerHTML = `<div class="alert alert-danger">Smart search failed: ${err.message}</div>`;
+  }
+}
+
+function clearSmartSearch() {
+  isSmartMode = false;
+  document.getElementById('smartBanner').classList.remove('show');
+}
+
+// ── Filters ────────────────────────────────────────────
+function getFilters() {
+  const types = [...document.querySelectorAll('#jobTypeFilters input:checked')].map(i => i.value);
+  return {
+    search:     document.getElementById('searchInput').value.trim(),
+    job_type:   types.join(','),
+    category:   document.getElementById('categoryFilter').value,
+    location:   document.getElementById('locationFilter').value,
+    company:    document.getElementById('companyFilter').value,
+    salary_min: activeSalMin,
+    salary_max: activeSalMax,
+    sort:       document.getElementById('sortSelect').value,
+    page:       currentPage,
+    limit:      10,
+  };
+}
+
+function applyFilters() { clearSmartSearch(); currentPage = 1; loadJobs(); }
+
+function clearFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('categoryFilter').value = '';
+  document.getElementById('locationFilter').value = '';
+  document.getElementById('companyFilter').value = '';
+  document.getElementById('sortSelect').value = 'newest';
+  document.querySelectorAll('#jobTypeFilters input').forEach(i => i.checked = false);
+  document.querySelectorAll('.salary-pill').forEach(p => p.classList.remove('active'));
+  document.querySelector('.salary-pill').classList.add('active');
+  activeSalMin = ''; activeSalMax = '';
+  clearSmartSearch(); currentPage = 1; loadJobs();
+}
+
+// ── Load Jobs ──────────────────────────────────────────
+async function loadJobs() {
+  const container = document.getElementById('jobsList');
+  container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+  try {
+    const filters = getFilters();
+    Object.keys(filters).forEach(k => { if (!filters[k] && filters[k] !== 0) delete filters[k]; });
+    const data = await api.getJobs(filters);
+    document.getElementById('resultsCount').textContent = `${data.pagination.total} job${data.pagination.total !== 1 ? 's' : ''} found`;
+    if (!data.jobs.length) {
+      container.innerHTML = `<div class="text-center py-5"><div style="font-size:4rem">🔍</div><h5 class="mt-3">No jobs found</h5><p class="text-muted">Try adjusting your filters.</p></div>`;
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+    renderJobCards(data.jobs, false);
+    renderPagination(data.pagination);
+  } catch (err) {
+    container.innerHTML = `<div class="alert alert-danger">Failed to load jobs: ${err.message}</div>`;
+  }
+}
+
+function renderJobCards(jobs, showReason) {
+  const loggedIn = api.isLoggedIn();
+  document.getElementById('jobsList').innerHTML = jobs.map(job => `
+    <div class="job-card mb-3">
+      ${loggedIn ? `<button class="bookmark-btn" onclick="toggleBookmark(event,${job.id},this)"><i class="bi bi-bookmark"></i></button>` : ''}
+      <div class="job-card-header">
+        <div class="company-logo-placeholder flex-shrink-0">${job.company_name.charAt(0)}</div>
+        <div class="job-card-body">
+          <div class="job-card-meta">
+            <div class="job-title-wrap">
+              <a href="#" class="job-title" onclick="openJobModal(${job.id});return false;">${job.title}</a>
+              <div class="company-name mt-1">${job.company_name} · <i class="bi bi-geo-alt"></i> ${job.location}</div>
+            </div>
+            <div class="job-right">
+              <span class="fw-semibold text-success small">${formatSalary(job.salary_min, job.salary_max)}</span>
+              <span class="text-muted small">${timeAgo(job.created_at)}</span>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <span class="badge-type ${badgeClass(job.job_type)}">${job.job_type}</span>
+            ${job.category ? `<span class="badge bg-light text-secondary">${job.category}</span>` : ''}
+            ${job.deadline ? `<span class="badge bg-light text-warning"><i class="bi bi-clock me-1"></i>Closes ${new Date(job.deadline).toLocaleDateString()}</span>` : ''}
+          </div>
+          ${showReason && job._reason ? `<div class="ai-reason">✨ ${job._reason}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPagination({ page, pages }) {
+  if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = '<nav><ul class="pagination">';
+  html += `<li class="page-item ${page===1?'disabled':''}"><a class="page-link" href="#" onclick="goPage(${page-1});return false;">‹</a></li>`;
+  for (let i = 1; i <= pages; i++) {
+    html += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a></li>`;
+  }
+  html += `<li class="page-item ${page===pages?'disabled':''}"><a class="page-link" href="#" onclick="goPage(${page+1});return false;">›</a></li>`;
+  html += '</ul></nav>';
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) { currentPage = p; loadJobs(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+// ── Load filter dropdowns ──────────────────────────────
+async function loadCompanies() {
+  try {
+    const res  = await fetch('/api/jobs/companies');
+    const data = await res.json();
+    const sel  = document.getElementById('companyFilter');
+    data.companies.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      sel.appendChild(opt);
+    });
+  } catch (err) { console.error('loadCompanies:', err); }
+}
+
+async function loadStats() {
+  try {
+    const res  = await fetch('/api/jobs/stats');
+    const data = await res.json();
+    document.getElementById('statJobs').textContent      = data.stats.activeJobs;
+    document.getElementById('statCompanies').textContent = data.stats.totalEmployers;
+    document.getElementById('statShortTerm').textContent = data.stats.shortTermJobs;
+    document.getElementById('statPartTime').textContent  = data.stats.partTimeJobs;
+  } catch (_) {
+    document.getElementById('statsBar').closest('.stats-bar').style.display = 'none';
+  }
+}
+
+// ── Job Modal ──────────────────────────────────────────
+async function openJobModal(jobId) {
+  if (urlParams.get('id')) { history.replaceState(null,'','/jobs.html'); }
+  currentJobId = jobId;
+  const modal = new bootstrap.Modal(document.getElementById('jobModal'));
+  document.getElementById('jobModalBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+  modal.show();
+  try {
+    const { job } = await api.getJob(jobId);
+    const user = api.getUser();
+    document.getElementById('jobModalBody').innerHTML = `
+      <div class="d-flex align-items-start gap-3 mb-4">
+        <div class="company-logo-placeholder" style="width:64px;height:64px;font-size:1.5rem">${job.company_name.charAt(0)}</div>
+        <div>
+          <h4 class="fw-bold mb-1">${job.title}</h4>
+          <div class="text-muted">${job.company_name}</div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <span class="badge-type ${badgeClass(job.job_type)}">${job.job_type}</span>
+            <span class="badge bg-light text-secondary"><i class="bi bi-geo-alt"></i> ${job.location}</span>
+            ${job.category ? `<span class="badge bg-light text-secondary">${job.category}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6"><div class="p-3 bg-light rounded-3"><div class="small text-muted">Salary</div><div class="fw-semibold text-success">${formatSalary(job.salary_min, job.salary_max)}</div></div></div>
+        <div class="col-sm-6"><div class="p-3 bg-light rounded-3"><div class="small text-muted">Deadline</div><div class="fw-semibold">${job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Open'}</div></div></div>
+      </div>
+      <h6 class="fw-bold">Job Description</h6>
+      <p class="text-muted" style="white-space:pre-line">${job.description}</p>
+      ${job.requirements ? `<h6 class="fw-bold mt-3">Requirements</h6><p class="text-muted" style="white-space:pre-line">${job.requirements}</p>` : ''}
+      <h6 class="fw-bold mt-3">About ${job.company_name}</h6>
+      <p class="text-muted">${job.company_description || 'No description available.'}</p>
+      <div class="d-flex gap-2 mt-4">
+        ${user && user.role === 'student' ? `<button class="btn btn-primary fw-bold" onclick="openApplyModal()">Apply Now</button>` : ''}
+        ${!user ? `<a href="/login.html" class="btn btn-primary fw-bold">Login to Apply</a>` : ''}
+        ${api.isLoggedIn() ? `<button class="btn btn-outline-warning" onclick="toggleBookmark(event,${job.id},this)"><i class="bi bi-bookmark"></i> Save Job</button>` : ''}
+      </div>`;
+  } catch (err) {
+    document.getElementById('jobModalBody').innerHTML = `<div class="alert alert-danger">Failed to load job details.</div>`;
+  }
+}
+
+function openApplyModal() {
+  bootstrap.Modal.getInstance(document.getElementById('jobModal')).hide();
+  setTimeout(() => new bootstrap.Modal(document.getElementById('applyModal')).show(), 300);
+}
+
+async function submitApplication() {
+  if (!api.isLoggedIn()) { window.location.href = '/login.html'; return; }
+  const btn = document.getElementById('submitApplyBtn');
+  const alertEl = document.getElementById('applyAlert');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+  try {
+    await api.applyJob(currentJobId, document.getElementById('coverLetter').value);
+    alertEl.className = 'alert alert-success';
+    alertEl.textContent = '✅ Application submitted successfully!';
+    alertEl.classList.remove('d-none');
+    btn.textContent = 'Applied!';
+    setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('applyModal')).hide(), 2000);
+  } catch (err) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = err.message;
+    alertEl.classList.remove('d-none');
+    btn.disabled = false;
+    btn.textContent = 'Submit Application';
+  }
+}
+
+async function toggleBookmark(e, jobId, btn) {
+  e.stopPropagation();
+  if (!api.isLoggedIn()) { window.location.href = '/login.html'; return; }
+  const icon = btn.querySelector('i') || btn;
+  const isBookmarked = icon.classList.contains('bi-bookmark-fill');
+  try {
+    if (isBookmarked) {
+      await api.removeBookmark(jobId); icon.className = 'bi bi-bookmark'; btn.classList.remove('active'); showToast('Bookmark removed','info');
+    } else {
+      await api.addBookmark(jobId); icon.className = 'bi bi-bookmark-fill'; btn.classList.add('active'); showToast('Job saved!','success');
+    }
+  } catch (err) { showToast(err.message,'danger'); }
+}
+
+// ── Init — runs after ALL functions are defined ────────
+(async function init() {
+  await Promise.all([loadCompanies(), loadStats()]);
+  loadJobs();
+  if (urlParams.get('id')) openJobModal(urlParams.get('id'));
+  // Pre-select category from URL param
+  if (urlParams.get('category')) {
+    document.getElementById('categoryFilter').value = urlParams.get('category');
+  }
+})();
 </script>
 </body>
 </html>

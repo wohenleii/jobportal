@@ -102,6 +102,18 @@
   if (!api.isLoggedIn()) window.location.href = '/login.html';
   updateNavAuth();
 
+  // Check if redirected to bookmarks tab
+  if (localStorage.getItem('profileTab') === 'bookmarks') {
+    localStorage.removeItem('profileTab');
+    document.addEventListener('DOMContentLoaded', () => {});
+    // Switch to bookmarks tab after load
+    window.addEventListener('load', () => {
+      const btn = document.querySelector('#profileTabs .nav-link:nth-child(2)') ||
+                  [...document.querySelectorAll('#profileTabs .nav-link')].find(b => b.textContent.includes('Bookmark'));
+      if (btn) btn.click();
+    });
+  }
+
   const statusColors = {
     pending: 'warning', reviewed: 'info', shortlisted: 'primary',
     rejected: 'danger', hired: 'success'

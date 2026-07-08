@@ -179,7 +179,7 @@
 
   async function loadStats() {
     try {
-      const data = await api.getAdminStats();
+      const data = await api.getPublicStats();
       document.getElementById('statJobs').textContent = data.stats.activeJobs;
       document.getElementById('statCompanies').textContent = data.stats.totalEmployers;
       document.getElementById('statUsers').textContent = data.stats.totalUsers;
