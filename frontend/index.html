@@ -92,13 +92,7 @@
   </div>
 </section>
 
-<!-- Categories -->
-<section class="py-5 bg-white">
-  <div class="container">
-    <h2 class="fw-bold text-center mb-4">Browse by Category</h2>
-    <div id="categoriesGrid" class="row g-3 justify-content-center"></div>
-  </div>
-</section>
+
 
 <!-- CTA -->
 <section class="py-5" style="background: linear-gradient(135deg,#1e3a8a,#2563eb); color:white">
@@ -187,26 +181,9 @@
     } catch (_) {}
   }
 
-  async function loadCategories() {
-    try {
-      const data = await api.getCategories();
-      const icons = { Technology:'💻', Design:'🎨', Marketing:'📣', Finance:'💰', Healthcare:'🏥', Education:'📚', 'Data Science':'📊', Engineering:'⚙️' };
-      document.getElementById('categoriesGrid').innerHTML = data.categories.map(cat => `
-        <div class="col-6 col-md-3 col-lg-2">
-          <a href="/jobs.html?category=${encodeURIComponent(cat)}" class="text-decoration-none">
-            <div class="text-center p-3 rounded-3 border bg-white h-100" style="transition:all .2s" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor=''">
-              <div style="font-size:2rem">${icons[cat] || '💼'}</div>
-              <div class="fw-semibold small mt-1">${cat}</div>
-            </div>
-          </a>
-        </div>
-      `).join('');
-    } catch (_) {}
-  }
 
   loadFeaturedJobs();
   loadStats();
-  loadCategories();
 </script>
 </body>
 </html>
