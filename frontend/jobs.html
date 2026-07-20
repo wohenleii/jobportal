@@ -112,23 +112,19 @@
         <div class="filter-section-title">Category</div>
         <select class="form-select form-select-sm" id="categoryFilter" onchange="applyFilters()">
           <option value="">All Categories</option>
-          <option value="IT">IT</option>
-          <option value="Media">Media</option>
-          <option value="Design">Design</option>
+          <option value="Software & IT">Software &amp; IT</option>
+          <option value="Sales">Sales</option>
           <option value="Marketing">Marketing</option>
-          <option value="Finance">Finance</option>
+          <option value="Accounting & Finance">Accounting &amp; Finance</option>
+          <option value="Human Resources">Human Resources</option>
+          <option value="Customer Service">Customer Service</option>
+          <option value="Administration">Administration</option>
           <option value="Engineering">Engineering</option>
+          <option value="Design">Design</option>
+          <option value="Operations">Operations</option>
           <option value="Healthcare">Healthcare</option>
           <option value="Education">Education</option>
-          <option value="Sales">Sales</option>
-          <option value="Customer Service">Customer Service</option>
-          <option value="Hospitality">Hospitality</option>
-          <option value="Logistics">Logistics</option>
-          <option value="Admin">Admin</option>
-          <option value="F&B">F&B</option>
-          <option value="Retail">Retail</option>
-          <option value="Real Estate">Real Estate</option>
-          <option value="Others">Others</option>
+          <option value="Other">Other</option>
         </select>
 
         <div class="filter-section-title">Location (Region)</div>
@@ -465,12 +461,42 @@ async function openJobModal(jobId) {
 }
 
 function openApplyModal() {
-  bootstrap.Modal.getInstance(document.getElementById('jobModal')).hide();
-  setTimeout(() => new bootstrap.Modal(document.getElementById('applyModal')).show(), 300);
+  ensureStudentProfileComplete().then((ok) => {
+    if (!ok) return;
+    bootstrap.Modal.getInstance(document.getElementById('jobModal')).hide();
+    setTimeout(() => new bootstrap.Modal(document.getElementById('applyModal')).show(), 300);
+  });
+}
+
+async function ensureStudentProfileComplete() {
+  if (!api.isLoggedIn()) {
+    window.location.href = '/login.html';
+    return false;
+  }
+  const user = api.getUser();
+  if (!user || user.role !== 'student') {
+    showToast('Only student accounts can apply for jobs.', 'warning');
+    return false;
+  }
+  try {
+    const data = await api.getMe();
+    const profile = data.user || {};
+    if (isStudentProfileComplete(profile)) return true;
+    const missing = studentProfileMissingFields(profile).join(', ');
+    showToast(`Please complete your profile first (${missing}). Employers need these details.`, 'warning');
+    setTimeout(() => { window.location.href = '/profile.html?complete=1'; }, 900);
+    return false;
+  } catch (err) {
+    showToast(err.message || 'Could not verify your profile.', 'danger');
+    return false;
+  }
 }
 
 async function submitApplication() {
   if (!api.isLoggedIn()) { window.location.href = '/login.html'; return; }
+  const ready = await ensureStudentProfileComplete();
+  if (!ready) return;
+
   const btn = document.getElementById('submitApplyBtn');
   const alertEl = document.getElementById('applyAlert');
   btn.disabled = true;
@@ -478,7 +504,7 @@ async function submitApplication() {
   try {
     await api.applyJob(currentJobId, document.getElementById('coverLetter').value);
     alertEl.className = 'alert alert-success';
-    alertEl.textContent = '✅ Application submitted successfully!';
+    alertEl.textContent = 'Application submitted successfully!';
     alertEl.classList.remove('d-none');
     btn.textContent = 'Applied!';
     setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('applyModal')).hide(), 2000);
@@ -488,6 +514,9 @@ async function submitApplication() {
     alertEl.classList.remove('d-none');
     btn.disabled = false;
     btn.textContent = 'Submit Application';
+    if (err.message && /complete your profile/i.test(err.message)) {
+      setTimeout(() => { window.location.href = '/profile.html?complete=1'; }, 1200);
+    }
   }
 }
 

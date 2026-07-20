@@ -151,6 +151,39 @@ router.get('/employer-profile', authenticate, async (req, res) => {
 // PUT /api/auth/employer-profile — update employer company profile
 router.put('/employer-profile', authenticate, async (req, res) => {
   const { company_name, company_description, industry, location, company_website } = req.body;
+
+  if (!company_name || !String(company_name).trim()) {
+    return res.status(400).json({ success: false, message: 'Company name is required.' });
+  }
+
+  const allowedIndustries = [
+    'Information Technology',
+    'Banking & Finance',
+    'Healthcare',
+    'Education',
+    'Retail & E-commerce',
+    'Engineering & Manufacturing',
+    'Construction & Real Estate',
+    'Hospitality & Tourism',
+    'Transportation & Logistics',
+    'Government',
+    'Media & Marketing',
+    'Other',
+  ];
+  const allowedLocations = ['Islandwide', 'North', 'South', 'East', 'West', 'Central'];
+
+  if (industry && !allowedIndustries.includes(industry)) {
+    return res.status(400).json({ success: false, message: 'Invalid industry selected.' });
+  }
+  if (location && !allowedLocations.includes(location)) {
+    return res.status(400).json({ success: false, message: 'Location must be a Singapore region.' });
+  }
+
+  const website = company_website ? String(company_website).trim() : '';
+  if (website && !/^https?:\/\//i.test(website)) {
+    return res.status(400).json({ success: false, message: 'Website must start with http:// or https://' });
+  }
+
   try {
     const [rows] = await db.query(
       'SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
@@ -159,9 +192,17 @@ router.put('/employer-profile', authenticate, async (req, res) => {
     if (rows.length === 0) {
       return res.status(400).json({ success: false, message: 'Employer profile not found.' });
     }
+    // Employers may update their profile while pending/rejected/approved
     await db.query(
       'UPDATE employers SET company_name=?, company_description=?, industry=?, location=?, company_website=? WHERE id=?',
-      [company_name, company_description, industry, location, company_website, rows[0].id]
+      [
+        String(company_name).trim(),
+        company_description ? String(company_description).trim() : null,
+        industry || null,
+        location || null,
+        website || null,
+        rows[0].id,
+      ]
     );
     res.json({ success: true, message: 'Company profile updated successfully.' });
   } catch (err) {

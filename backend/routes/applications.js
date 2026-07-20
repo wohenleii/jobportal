@@ -73,7 +73,7 @@ router.get('/employer', authenticate, requireEmployer, async (req, res) => {
     const employerId = empRows[0].id;
 
     const [rows] = await db.query(
-      `SELECT a.*, u.name as applicant_name, u.email as applicant_email, u.skills, u.resume_url,
+      `SELECT a.*, u.name as applicant_name, u.email as applicant_email, u.skills, u.resume_url, u.bio,
               j.title as job_title, j.job_type
        FROM applications a
        JOIN users u ON a.user_id = u.id
@@ -128,7 +128,7 @@ router.get('/job/:jobId', authenticate, requireEmployer, async (req, res) => {
     }
 
     const [rows] = await db.query(
-      `SELECT a.*, u.name, u.email, u.skills, u.resume_url
+      `SELECT a.*, u.name, u.email, u.skills, u.resume_url, u.bio
        FROM applications a
        JOIN users u ON a.user_id = u.id
        WHERE a.job_id = ?
@@ -152,6 +152,25 @@ router.post('/:jobId', authenticate, async (req, res) => {
   }
 
   try {
+    const [userRows] = await db.query(
+      'SELECT name, bio, skills, resume_url FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    const student = userRows[0] || {};
+    const missing = [];
+    if (!String(student.name || '').trim()) missing.push('full name');
+    if (!String(student.bio || '').trim()) missing.push('bio');
+    if (!String(student.skills || '').trim()) missing.push('skills');
+    if (!String(student.resume_url || '').trim()) missing.push('resume URL');
+    if (missing.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Please complete your profile before applying (${missing.join(', ')}).`,
+        code: 'PROFILE_INCOMPLETE',
+        missing,
+      });
+    }
+
     const [jobRows] = await db.query(
       'SELECT id, status, deadline FROM jobs WHERE id = ?',
       [jobId]

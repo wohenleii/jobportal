@@ -669,6 +669,19 @@ body.is-student .nav-student-only {
   font-size: 0.875rem;
 }
 
+.profile-job-card {
+  cursor: pointer;
+}
+
+.profile-job-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.text-preline {
+  white-space: pre-line;
+}
+
 .badge-type {
   font-size: 0.72rem;
   padding: 4px 10px;

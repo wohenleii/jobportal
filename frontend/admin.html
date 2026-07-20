@@ -290,6 +290,24 @@
   </div>
 </div>
 
+<!-- Company Profile Modal -->
+<div class="modal fade" id="companyDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-building me-2 text-primary"></i>Company Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="companyDetailsBody">
+        <div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div></div>
+      </div>
+      <div class="modal-footer" id="companyDetailsFooter">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toastContainer" class="toast-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
@@ -301,7 +319,7 @@
   document.getElementById('adminAvatar').textContent = user.name.charAt(0).toUpperCase();
   let usersPage = 1, jobsPage = 1, companiesPage = 1;
   let categoryChart, typeChart, viewsChart, appsChart;
-  let rejectModal, rejectJobModal, jobDetailsModal;
+  let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
 
   function toggleSidebarCollapse() {
     const sidebar = document.getElementById('sidebar');
@@ -568,8 +586,8 @@
         ? data.employers.map(e => `
           <tr>
             <td>
-              <div class="fw-semibold">${escapeHtml(e.company_name)}</div>
-              ${e.company_website ? `<a href="${escapeHtml(e.company_website)}" target="_blank" class="small text-muted">${escapeHtml(e.company_website)}</a>` : ''}
+              <a href="#" class="fw-semibold text-decoration-none" onclick="openCompanyDetails(${e.id}); return false;">${escapeHtml(e.company_name)}</a>
+              ${e.company_website ? `<div><a href="${escapeHtml(e.company_website)}" target="_blank" rel="noopener noreferrer" class="small text-muted">${escapeHtml(e.company_website)}</a></div>` : ''}
               ${e.verification_status === 'rejected' && e.rejection_reason
                 ? `<div class="small text-danger mt-1"><i class="bi bi-info-circle me-1"></i>${escapeHtml(e.rejection_reason)}</div>`
                 : ''}
@@ -597,6 +615,78 @@
     } catch (err) {
       showToast(err.message || 'Failed to load companies', 'danger');
     }
+  }
+
+  function openCompanyDetails(id) {
+    const e = companiesCache[id];
+    const body = document.getElementById('companyDetailsBody');
+    const footer = document.getElementById('companyDetailsFooter');
+    if (!e) {
+      body.innerHTML = '<div class="alert alert-danger mb-0">Company not found.</div>';
+      companyDetailsModal.show();
+      return;
+    }
+
+    const websiteHtml = e.company_website
+      ? `<a href="${escapeHtml(e.company_website)}" target="_blank" rel="noopener noreferrer">${escapeHtml(e.company_website)}</a>`
+      : '<span class="text-muted">Not provided</span>';
+
+    body.innerHTML = `
+      <div class="mb-3">
+        <h4 class="fw-bold mb-1">${escapeHtml(e.company_name)}</h4>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          ${verificationBadge(e.verification_status)}
+          ${e.industry ? `<span class="badge bg-light text-secondary">${escapeHtml(e.industry)}</span>` : ''}
+          ${e.location ? `<span class="badge bg-light text-secondary"><i class="bi bi-geo-alt"></i> ${escapeHtml(e.location)}</span>` : ''}
+        </div>
+      </div>
+      ${e.verification_status === 'rejected' && e.rejection_reason
+        ? `<div class="alert alert-danger"><strong>Rejection reason:</strong> ${escapeHtml(e.rejection_reason)}</div>`
+        : ''}
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">Contact</div>
+            <div class="fw-semibold">${escapeHtml(e.contact_name || '—')}</div>
+            <div class="small text-muted">${escapeHtml(e.contact_email || '')}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">Website / Social Media</div>
+            <div class="fw-semibold text-break">${websiteHtml}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">Industry</div>
+            <div class="fw-semibold">${escapeHtml(e.industry) || '—'}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">Location (Singapore)</div>
+            <div class="fw-semibold">${escapeHtml(e.location) || '—'}</div>
+          </div>
+        </div>
+      </div>
+      <h6 class="fw-bold">Company Overview</h6>
+      <p class="text-muted" style="white-space:pre-line">${escapeHtml(e.company_description) || 'No company overview provided yet.'}</p>
+      <div class="small text-muted mt-3">
+        Registered: ${e.created_at ? new Date(e.created_at).toLocaleString() : '—'}
+        ${e.verified_at ? ` · Verified: ${new Date(e.verified_at).toLocaleString()}` : ''}
+      </div>
+    `;
+
+    let actions = '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>';
+    if (e.verification_status !== 'approved') {
+      actions = `<button type="button" class="btn btn-success" onclick="companyDetailsModal.hide(); approveCompany(${e.id})"><i class="bi bi-check-lg me-1"></i>Approve</button>` + actions;
+    }
+    if (e.verification_status !== 'rejected') {
+      actions = `<button type="button" class="btn btn-outline-danger me-auto" onclick="companyDetailsModal.hide(); openRejectModal(${e.id})"><i class="bi bi-x-lg me-1"></i>Reject</button>` + actions;
+    }
+    footer.innerHTML = actions;
+    companyDetailsModal.show();
   }
 
   async function approveCompany(id) {
@@ -889,6 +979,7 @@
   rejectModal = new bootstrap.Modal(document.getElementById('rejectCompanyModal'));
   rejectJobModal = new bootstrap.Modal(document.getElementById('rejectJobModal'));
   jobDetailsModal = new bootstrap.Modal(document.getElementById('jobDetailsModal'));
+  companyDetailsModal = new bootstrap.Modal(document.getElementById('companyDetailsModal'));
   loadDashboard();
 </script>
 </body>

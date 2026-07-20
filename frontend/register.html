@@ -148,7 +148,7 @@
       await api.register({ name, email, password, role, company_name });
       showAlert(
         role === 'employer'
-          ? 'Account created! Your company is pending admin verification. Redirecting...'
+          ? 'Account created! Complete your company profile while waiting for admin approval. Redirecting...'
           : 'Account created! Redirecting...',
         'success'
       );

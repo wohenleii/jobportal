@@ -394,16 +394,13 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to update this job.' });
     }
 
-    // Rejected jobs cannot be edited by employers
-    if (req.user.role !== 'admin' && existing.status === 'rejected') {
-      return res.status(403).json({
-        success: false,
-        message: 'Rejected jobs cannot be edited.',
-      });
-    }
-
     // Employers can only toggle active <-> closed; cannot self-approve pending/rejected
+    // Editing a rejected job automatically resubmits it for admin review (pending)
     let nextStatus = existing.status;
+    let clearRejectionReason = false;
+    const isContentUpdate = [title, description, requirements, location, job_type, category, salary_min, salary_max, deadline]
+      .some(v => v !== undefined);
+
     if (status !== undefined && status !== null && status !== '') {
       if (req.user.role === 'admin') {
         nextStatus = status;
@@ -417,6 +414,9 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
           message: 'You cannot change this job status. Pending and rejected jobs require admin review.',
         });
       }
+    } else if (req.user.role !== 'admin' && existing.status === 'rejected' && isContentUpdate) {
+      nextStatus = 'pending';
+      clearRejectionReason = true;
     }
 
     // If only status was sent (close/reopen), keep other fields
@@ -431,14 +431,21 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
     const nextDeadline = deadline !== undefined ? (deadline || null) : existing.deadline;
 
     await db.query(
-      `UPDATE jobs SET title=?, description=?, requirements=?, location=?, job_type=?, category=?, salary_min=?, salary_max=?, deadline=?, status=?
+      `UPDATE jobs SET title=?, description=?, requirements=?, location=?, job_type=?, category=?, salary_min=?, salary_max=?, deadline=?, status=?,
+        rejection_reason = CASE WHEN ? = 1 THEN NULL ELSE rejection_reason END
        WHERE id=?`,
       [
         nextTitle, nextDescription, nextRequirements, nextLocation, nextJobType, nextCategory,
-        nextSalaryMin, nextSalaryMax, nextDeadline, nextStatus, id,
+        nextSalaryMin, nextSalaryMax, nextDeadline, nextStatus,
+        clearRejectionReason ? 1 : 0,
+        id,
       ]
     );
-    res.json({ success: true, message: 'Job updated successfully.' });
+
+    const message = clearRejectionReason
+      ? 'Job updated and resubmitted for admin review.'
+      : 'Job updated successfully.';
+    res.json({ success: true, message, status: nextStatus });
   } catch (err) {
     console.error('Update job error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });

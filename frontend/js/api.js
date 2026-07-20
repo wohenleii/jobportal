@@ -264,6 +264,25 @@ function firstNameFromFull(name) {
   return first || 'there';
 }
 
+function isStudentProfileComplete(user) {
+  if (!user) return false;
+  return !!(
+    String(user.name || '').trim() &&
+    String(user.bio || '').trim() &&
+    String(user.skills || '').trim() &&
+    String(user.resume_url || '').trim()
+  );
+}
+
+function studentProfileMissingFields(user) {
+  const missing = [];
+  if (!user || !String(user.name || '').trim()) missing.push('Full name');
+  if (!user || !String(user.bio || '').trim()) missing.push('Bio');
+  if (!user || !String(user.skills || '').trim()) missing.push('Skills');
+  if (!user || !String(user.resume_url || '').trim()) missing.push('Resume URL');
+  return missing;
+}
+
 function formatJobTypeLabel(type) {
   const map = {
     'full-time': 'Full-time',

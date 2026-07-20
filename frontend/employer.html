@@ -177,30 +177,54 @@
 
   <!-- ── Company Profile Section ───────────────────────────────────────── -->
   <div id="section-profile" class="d-none">
-    <div class="stat-card" style="max-width:700px">
-      <h6 class="fw-semibold mb-4"><i class="bi bi-building me-2 text-primary"></i>Company Profile</h6>
+    <div class="stat-card" style="max-width:720px">
+      <h6 class="fw-semibold mb-2"><i class="bi bi-building me-2 text-primary"></i>Company Profile</h6>
+      <p class="text-muted small mb-4">Complete your company details while awaiting admin approval. You can post jobs only after your company is approved.</p>
       <form id="profileForm" novalidate>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold" for="cp_company_name">Company Name <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="cp_company_name" placeholder="e.g. Tech Corp" required />
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Company Overview</label>
+          <label class="form-label fw-semibold" for="cp_company_description">Company Overview</label>
           <textarea class="form-control" id="cp_company_description" rows="4" placeholder="Describe your company, culture, and what you do..."></textarea>
         </div>
         <div class="row g-3 mb-3">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Industry</label>
-            <input type="text" class="form-control" id="cp_industry" placeholder="e.g. Technology, Finance..." />
+            <label class="form-label fw-semibold" for="cp_industry">Industry <span class="text-danger">*</span></label>
+            <select class="form-select" id="cp_industry" required>
+              <option value="" disabled selected>Select industry...</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Banking & Finance">Banking &amp; Finance</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Education">Education</option>
+              <option value="Retail & E-commerce">Retail &amp; E-commerce</option>
+              <option value="Engineering & Manufacturing">Engineering &amp; Manufacturing</option>
+              <option value="Construction & Real Estate">Construction &amp; Real Estate</option>
+              <option value="Hospitality & Tourism">Hospitality &amp; Tourism</option>
+              <option value="Transportation & Logistics">Transportation &amp; Logistics</option>
+              <option value="Government">Government</option>
+              <option value="Media & Marketing">Media &amp; Marketing</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Location</label>
-            <input type="text" class="form-control" id="cp_location" placeholder="e.g. Singapore" />
+            <label class="form-label fw-semibold" for="cp_location">Location (Singapore) <span class="text-danger">*</span></label>
+            <select class="form-select" id="cp_location" required>
+              <option value="" disabled selected>Select location...</option>
+              <option value="Islandwide">Islandwide</option>
+              <option value="North">North</option>
+              <option value="South">South</option>
+              <option value="East">East</option>
+              <option value="West">West</option>
+              <option value="Central">Central</option>
+            </select>
           </div>
         </div>
         <div class="mb-4">
-          <label class="form-label fw-semibold">Website / Social Media</label>
-          <input type="url" class="form-control" id="cp_company_website" placeholder="e.g. https://yourcompany.com" />
+          <label class="form-label fw-semibold" for="cp_company_website">Website / Social Media <span class="text-muted fw-normal">(optional)</span></label>
+          <input type="url" class="form-control" id="cp_company_website" placeholder="https://yourcompany.com or social media URL" />
+          <div class="form-text">Optional. Include your company website or a public social media page.</div>
         </div>
         <button type="button" class="btn btn-primary px-4" onclick="saveProfile()">
           <i class="bi bi-save me-1"></i> Save Profile
@@ -263,22 +287,19 @@
               <label class="form-label fw-semibold">Category</label>
               <select class="form-select" id="pj_category">
                 <option value="" disabled selected>Select category...</option>
-                <option value="IT">IT</option>
-                <option value="Design">Design</option>
+                <option value="Software & IT">Software &amp; IT</option>
+                <option value="Sales">Sales</option>
                 <option value="Marketing">Marketing</option>
-                <option value="Finance">Finance</option>
+                <option value="Accounting & Finance">Accounting &amp; Finance</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Customer Service">Customer Service</option>
+                <option value="Administration">Administration</option>
                 <option value="Engineering">Engineering</option>
+                <option value="Design">Design</option>
+                <option value="Operations">Operations</option>
                 <option value="Healthcare">Healthcare</option>
                 <option value="Education">Education</option>
-                <option value="Sales">Sales</option>
-                <option value="Customer Service">Customer Service</option>
-                <option value="Hospitality">Hospitality</option>
-                <option value="Logistics">Logistics</option>
-                <option value="Admin">Admin</option>
-                <option value="F&B">F&B</option>
-                <option value="Retail">Retail</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Others">Others</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -317,6 +338,8 @@
       <div class="modal-body">
         <form id="editJobForm" novalidate>
           <input type="hidden" id="ej_id" />
+          <input type="hidden" id="ej_prev_status" />
+          <div id="ej_resubmitNotice" class="alert alert-warning d-none mb-3" role="status"></div>
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold">Job Title <span class="text-danger">*</span></label>
@@ -358,22 +381,19 @@
               <label class="form-label fw-semibold">Category</label>
               <select class="form-select" id="ej_category">
                 <option value="" disabled>Select category...</option>
-                <option value="IT">IT</option>
-                <option value="Design">Design</option>
+                <option value="Software & IT">Software &amp; IT</option>
+                <option value="Sales">Sales</option>
                 <option value="Marketing">Marketing</option>
-                <option value="Finance">Finance</option>
+                <option value="Accounting & Finance">Accounting &amp; Finance</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Customer Service">Customer Service</option>
+                <option value="Administration">Administration</option>
                 <option value="Engineering">Engineering</option>
+                <option value="Design">Design</option>
+                <option value="Operations">Operations</option>
                 <option value="Healthcare">Healthcare</option>
                 <option value="Education">Education</option>
-                <option value="Sales">Sales</option>
-                <option value="Customer Service">Customer Service</option>
-                <option value="Hospitality">Hospitality</option>
-                <option value="Logistics">Logistics</option>
-                <option value="Admin">Admin</option>
-                <option value="F&B">F&B</option>
-                <option value="Retail">Retail</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Others">Others</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -393,7 +413,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-dark" onclick="submitEditJob()">
+        <button type="button" class="btn btn-dark" id="ej_saveBtn" onclick="submitEditJob()">
           <i class="bi bi-save me-1"></i> Save Changes
         </button>
       </div>
@@ -411,6 +431,24 @@
       </div>
       <div class="modal-body" id="jobDetailsBody">
         <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Applicant Profile Modal -->
+<div class="modal fade" id="applicantProfileModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-badge me-2 text-primary"></i>Applicant Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="applicantProfileBody">
+        <div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -437,10 +475,17 @@
   const postJobModal = new bootstrap.Modal(document.getElementById('postJobModal'));
   const editJobModal = new bootstrap.Modal(document.getElementById('editJobModal'));
   const jobDetailsModal = new bootstrap.Modal(document.getElementById('jobDetailsModal'));
+  const applicantProfileModal = new bootstrap.Modal(document.getElementById('applicantProfileModal'));
   let employerJobsCache = {};
+  let applicantsCache = {};
   let jobsFilterStatus = 'all';
 
-  let companyVerification = { status: 'pending', rejection_reason: null };
+  let companyVerification = {
+    status: 'pending',
+    rejection_reason: null,
+    profileComplete: false,
+    company_name: '',
+  };
 
   function toggleSidebarCollapse() {
     const sidebar = document.getElementById('sidebar');
@@ -468,6 +513,16 @@
     return companyVerification.status === 'approved';
   }
 
+  function isProfileComplete(profile) {
+    if (!profile) return false;
+    return !!(
+      String(profile.company_name || '').trim() &&
+      String(profile.company_description || '').trim() &&
+      String(profile.industry || '').trim() &&
+      String(profile.location || '').trim()
+    );
+  }
+
   function setDisplayIdentity(companyName) {
     currentCompanyName = companyName || user.name || 'Employer';
     document.getElementById('welcomeName').textContent = currentCompanyName;
@@ -483,30 +538,61 @@
       banner.innerHTML = '';
       return;
     }
+
+    const profileBtn = `
+      <button type="button" class="btn btn-sm btn-primary mt-2 mt-md-0" onclick="navigateTo('profile')">
+        <i class="bi bi-building me-1" aria-hidden="true"></i>
+        ${companyVerification.profileComplete ? 'View Company Profile' : 'Complete Company Profile'}
+      </button>`;
+
     if (status === 'rejected') {
       banner.className = 'alert alert-danger mb-4';
       banner.innerHTML = `
-        <div class="d-flex align-items-start gap-2">
-          <i class="bi bi-x-circle-fill fs-5 mt-1" aria-hidden="true"></i>
-          <div>
-            <strong>Company verification rejected</strong>
-            <div class="mt-1">${companyVerification.rejection_reason
-              ? `Reason: ${escHtml(companyVerification.rejection_reason)}`
-              : 'Please update your company profile and contact the admin.'}</div>
-            <div class="small mt-1">You cannot post jobs until your company is approved.</div>
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill fs-5 mt-1" aria-hidden="true"></i>
+            <div>
+              <strong>Company verification rejected</strong>
+              <div class="mt-1">${companyVerification.rejection_reason
+                ? `Reason: ${escHtml(companyVerification.rejection_reason)}`
+                : 'Please update your company profile and wait for admin review.'}</div>
+              <div class="small mt-1">Update your company profile, then wait for an admin to review again. You cannot post jobs until approved.</div>
+            </div>
           </div>
+          ${profileBtn}
         </div>`;
       return;
     }
+
     banner.className = 'alert alert-warning mb-4';
-    banner.innerHTML = `
-      <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-hourglass-split fs-5 mt-1" aria-hidden="true"></i>
-        <div>
-          <strong>Company verification pending</strong>
-          <div class="mt-1">An admin must approve your company before you can post jobs. You can still update your company profile.</div>
-        </div>
-      </div>`;
+    banner.setAttribute('role', 'status');
+    if (!companyVerification.profileComplete) {
+      banner.innerHTML = `
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-exclamation-triangle-fill fs-5 mt-1" aria-hidden="true"></i>
+            <div>
+              <strong>Complete your company profile</strong>
+              <div class="mt-1">Your account is pending admin approval. Please fill in your company name, overview, industry, and Singapore location so admins can review your company.</div>
+              <div class="small mt-1">You can save your profile now. Job posting unlocks after approval.</div>
+            </div>
+          </div>
+          ${profileBtn}
+        </div>`;
+    } else {
+      banner.innerHTML = `
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-hourglass-split fs-5 mt-1" aria-hidden="true"></i>
+            <div>
+              <strong>Company verification pending</strong>
+              <div class="mt-1">Thanks — your company profile looks complete. An admin will review and approve your company before you can post jobs.</div>
+              <div class="small mt-1">You can still update your company profile while you wait.</div>
+            </div>
+          </div>
+          ${profileBtn}
+        </div>`;
+    }
   }
 
   async function loadCompanyVerification() {
@@ -516,11 +602,18 @@
       companyVerification = {
         status: profile.verification_status || 'pending',
         rejection_reason: profile.rejection_reason || null,
+        profileComplete: isProfileComplete(profile),
+        company_name: profile.company_name || '',
       };
       if (profile.company_name) setDisplayIdentity(profile.company_name);
     } catch (err) {
       console.warn('Verification status error:', err.message);
-      companyVerification = { status: 'pending', rejection_reason: null };
+      companyVerification = {
+        status: 'pending',
+        rejection_reason: null,
+        profileComplete: false,
+        company_name: '',
+      };
     }
     renderVerificationBanner();
   }
@@ -724,9 +817,7 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
                   <li><a class="dropdown-item" href="#" onclick="openJobDetails(${j.id}); return false;"><i class="bi bi-eye me-2"></i>View</a></li>
-                  ${j.status !== 'rejected'
-                    ? `<li><a class="dropdown-item" href="#" onclick="openEditJobModal(${j.id}); return false;"><i class="bi bi-pencil me-2"></i>Edit</a></li>`
-                    : ''}
+                  <li><a class="dropdown-item" href="#" onclick="openEditJobModal(${j.id}); return false;"><i class="bi bi-pencil me-2"></i>${j.status === 'rejected' ? 'Amend &amp; Resubmit' : 'Edit'}</a></li>
                   <li><a class="dropdown-item" href="#" onclick="navigateTo('applicants'); return false;"><i class="bi bi-people me-2"></i>Applicants</a></li>
                 </ul>
               </div>
@@ -853,10 +944,9 @@
             <td class="text-muted small">${j.deadline ? new Date(j.deadline).toLocaleDateString() : '—'}</td>
             <td>
               <div class="d-flex gap-1 flex-wrap">
-                ${j.status !== 'rejected' ? `
                 <button class="btn btn-sm btn-outline-primary" onclick="openEditJobModal(${j.id})" title="Edit">
-                  <i class="bi bi-pencil" aria-hidden="true"></i> Edit
-                </button>` : '<span class="text-muted small">Not editable</span>'}
+                  <i class="bi bi-pencil" aria-hidden="true"></i> ${j.status === 'rejected' ? 'Amend' : 'Edit'}
+                </button>
                 ${j.status === 'active' || j.status === 'closed' ? `
                 <button class="btn btn-sm ${j.status === 'active' ? 'btn-outline-secondary' : 'btn-outline-success'}"
                   onclick="toggleJobStatus(${j.id}, '${j.status}')" title="${j.status === 'active' ? 'Close' : 'Reopen'}">
@@ -910,10 +1000,17 @@
     try {
       const data = await api.getEmployerApplications();
       const apps = data.applications || [];
+      applicantsCache = {};
+      apps.forEach(a => { applicantsCache[a.id] = a; });
       document.getElementById('applicantsTable').innerHTML = apps.length
         ? apps.map(a => `
           <tr>
-            <td class="fw-semibold">${escHtml(a.applicant_name)}</td>
+            <td>
+              <a href="#" class="fw-semibold text-decoration-none" onclick="openApplicantProfile(${a.id}); return false;">
+                ${escHtml(a.applicant_name)}
+              </a>
+              <div class="small text-muted">Click to view profile</div>
+            </td>
             <td class="text-muted small">${escHtml(a.applicant_email)}</td>
             <td>${escHtml(a.job_title)}</td>
             <td class="text-muted small">${formatDate(a.applied_at)}</td>
@@ -949,6 +1046,64 @@
           </div>
         </td></tr>`;
     }
+  }
+
+  function openApplicantProfile(appId) {
+    const a = applicantsCache[appId];
+    const body = document.getElementById('applicantProfileBody');
+    if (!a) {
+      body.innerHTML = '<div class="alert alert-danger mb-0">Applicant not found.</div>';
+      applicantProfileModal.show();
+      return;
+    }
+
+    const skills = String(a.skills || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    const initials = companyInitials(a.applicant_name);
+    const resumeHtml = a.resume_url
+      ? `<a href="${escHtml(a.resume_url)}" target="_blank" rel="noopener noreferrer">${escHtml(a.resume_url)}</a>`
+      : '<span class="text-muted">Not provided</span>';
+
+    body.innerHTML = `
+      <div class="d-flex align-items-start gap-3 mb-4">
+        <div class="company-logo-placeholder" aria-hidden="true">${escHtml(initials)}</div>
+        <div>
+          <h4 class="fw-bold mb-1">${escHtml(a.applicant_name)}</h4>
+          <div class="text-muted">${escHtml(a.applicant_email || '')}</div>
+          <div class="mt-2">
+            <span class="badge bg-light text-secondary">Applied for: ${escHtml(a.job_title || '')}</span>
+            <span class="badge bg-primary ms-1">${escHtml(a.status || 'pending')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">Applied on</div>
+            <div class="fw-semibold">${formatDate(a.applied_at)}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">Resume / Portfolio</div>
+            <div class="fw-semibold text-break">${resumeHtml}</div>
+          </div>
+        </div>
+      </div>
+      <h6 class="fw-bold">Bio</h6>
+      <p class="text-muted text-preline">${escHtml(a.bio) || 'No bio provided.'}</p>
+      <h6 class="fw-bold mt-3">Skills</h6>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        ${skills.length
+          ? skills.map(s => `<span class="badge bg-light text-secondary border">${escHtml(s)}</span>`).join('')
+          : '<span class="text-muted">No skills listed.</span>'}
+      </div>
+      <h6 class="fw-bold">Cover Letter</h6>
+      <p class="text-muted text-preline">${escHtml(a.cover_letter) || 'No cover letter submitted.'}</p>
+    `;
+    applicantProfileModal.show();
   }
 
   async function updateAppStatus(appId, status, selectEl) {
@@ -1011,16 +1166,12 @@
 
   async function openEditJobModal(jobId) {
     try {
-      // Try to get from cache first (jobs already loaded)
       const data = await api.getEmployerJobs();
       const job = (data.jobs || []).find(j => j.id === jobId);
       if (!job) { showToast('Job not found.', 'danger'); return; }
-      if (job.status === 'rejected') {
-        showToast('Rejected jobs cannot be edited.', 'warning');
-        return;
-      }
 
       document.getElementById('ej_id').value          = job.id;
+      document.getElementById('ej_prev_status').value = job.status || '';
       document.getElementById('ej_title').value        = job.title || '';
       document.getElementById('ej_description').value  = job.description || '';
       document.getElementById('ej_requirements').value = job.requirements || '';
@@ -1030,6 +1181,21 @@
       document.getElementById('ej_salary_min').value   = job.salary_min || '';
       document.getElementById('ej_salary_max').value   = job.salary_max || '';
       document.getElementById('ej_deadline').value     = job.deadline ? job.deadline.split('T')[0] : '';
+
+      const notice = document.getElementById('ej_resubmitNotice');
+      const saveBtn = document.getElementById('ej_saveBtn');
+      if (job.status === 'rejected') {
+        notice.className = 'alert alert-warning mb-3';
+        notice.innerHTML = `
+          <strong>This job was rejected.</strong>
+          ${job.rejection_reason ? `<div class="mt-1">Reason: ${escHtml(job.rejection_reason)}</div>` : ''}
+          <div class="mt-1 small">Fix the issues below and save to resubmit it for admin review.</div>`;
+        saveBtn.innerHTML = '<i class="bi bi-send me-1"></i> Save &amp; Resubmit';
+      } else {
+        notice.className = 'alert alert-warning d-none mb-3';
+        notice.innerHTML = '';
+        saveBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Changes';
+      }
 
       editJobModal.show();
     } catch (err) {
@@ -1069,8 +1235,9 @@
     };
 
     try {
-      await api.updateJob(jobId, payload);
-      showToast('Job updated successfully!', 'success');
+      const result = await api.updateJob(jobId, payload);
+      const wasRejected = document.getElementById('ej_prev_status').value === 'rejected';
+      showToast(result.message || (wasRejected ? 'Job resubmitted for admin review.' : 'Job updated successfully!'), 'success');
       editJobModal.hide();
       form.classList.remove('was-validated');
       loadJobs();
@@ -1109,28 +1276,97 @@
       const p = data.profile || {};
       document.getElementById('cp_company_name').value        = p.company_name || '';
       document.getElementById('cp_company_description').value = p.company_description || '';
-      document.getElementById('cp_industry').value            = p.industry || '';
-      document.getElementById('cp_location').value            = p.location || '';
+      setSelectValue('cp_industry', mapIndustryValue(p.industry));
+      setSelectValue('cp_location', mapLocationValue(p.location));
       document.getElementById('cp_company_website').value     = p.company_website || '';
     } catch (err) {
       showToast('Failed to load profile: ' + err.message, 'danger');
     }
   }
 
+  function mapIndustryValue(industry) {
+    if (!industry) return '';
+    const raw = String(industry).trim();
+    const map = {
+      'Technology': 'Information Technology',
+      'IT': 'Information Technology',
+      'Information Technology': 'Information Technology',
+      'Finance': 'Banking & Finance',
+      'Banking': 'Banking & Finance',
+      'Banking & Finance': 'Banking & Finance',
+      'Real Estate': 'Construction & Real Estate',
+      'Real Estate / Finance': 'Construction & Real Estate',
+      'Construction & Real Estate': 'Construction & Real Estate',
+      'Food & Beverage': 'Hospitality & Tourism',
+      'Hospitality': 'Hospitality & Tourism',
+      'Hospitality & Tourism': 'Hospitality & Tourism',
+      'Manufacturing': 'Engineering & Manufacturing',
+      'Engineering': 'Engineering & Manufacturing',
+      'Engineering & Manufacturing': 'Engineering & Manufacturing',
+      'E-Commerce / Beauty Retail': 'Retail & E-commerce',
+      'Retail': 'Retail & E-commerce',
+      'Retail & E-commerce': 'Retail & E-commerce',
+      'Healthcare': 'Healthcare',
+      'Education': 'Education',
+      'Government': 'Government',
+      'Media & Marketing': 'Media & Marketing',
+      'Marketing': 'Media & Marketing',
+      'Transportation & Logistics': 'Transportation & Logistics',
+      'Logistics': 'Transportation & Logistics',
+      'Other': 'Other',
+    };
+    if (map[raw]) return map[raw];
+    const allowed = Object.values(map);
+    return allowed.includes(raw) ? raw : 'Other';
+  }
+
+  function mapLocationValue(location) {
+    if (!location) return '';
+    const raw = String(location).trim().toLowerCase();
+    if (raw.includes('north')) return 'North';
+    if (raw.includes('south')) return 'South';
+    if (raw.includes('east')) return 'East';
+    if (raw.includes('west')) return 'West';
+    if (raw.includes('central')) return 'Central';
+    if (raw.includes('island') || raw.includes('singapore') || raw.includes('remote')) return 'Islandwide';
+    return 'Islandwide';
+  }
+
   async function saveProfile() {
+    const form = document.getElementById('profileForm');
     const company_name = document.getElementById('cp_company_name').value.trim();
+    const industry = document.getElementById('cp_industry').value.trim();
+    const location = document.getElementById('cp_location').value.trim();
     if (!company_name) { showToast('Company name is required.', 'danger'); return; }
+    if (!industry) { showToast('Please select an industry.', 'danger'); return; }
+    if (!location) { showToast('Please select a Singapore location.', 'danger'); return; }
+
+    const website = document.getElementById('cp_company_website').value.trim();
+    if (website && !/^https?:\/\//i.test(website)) {
+      showToast('Website must start with http:// or https://', 'warning');
+      return;
+    }
+
     const payload = {
       company_name,
       company_description: document.getElementById('cp_company_description').value.trim(),
-      industry:            document.getElementById('cp_industry').value.trim(),
-      location:            document.getElementById('cp_location').value.trim(),
-      company_website:     document.getElementById('cp_company_website').value.trim(),
+      industry,
+      location,
+      company_website: website,
     };
     try {
       await api.updateEmployerProfile(payload);
       setDisplayIdentity(company_name);
-      showToast('Company profile saved successfully!', 'success');
+      companyVerification.profileComplete = isProfileComplete(payload);
+      companyVerification.company_name = company_name;
+      renderVerificationBanner();
+      showToast(
+        companyVerification.status === 'pending'
+          ? 'Profile saved. Waiting for admin approval — you can keep updating your details anytime.'
+          : 'Company profile saved successfully!',
+        'success'
+      );
+      form.classList.remove('was-validated');
     } catch (err) {
       showToast('Failed to save profile: ' + err.message, 'danger');
     }
@@ -1140,7 +1376,17 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeMobileSidebar();
   });
-  loadCompanyVerification().then(() => loadDashboard());
+  loadCompanyVerification().then(() => {
+    loadDashboard();
+    // Prompt new / pending employers to complete their profile first
+    if (
+      companyVerification.status !== 'approved' &&
+      !companyVerification.profileComplete
+    ) {
+      navigateTo('profile');
+      showToast('Please complete your company profile while waiting for admin approval.', 'warning');
+    }
+  });
 </script>
 </body>
 </html>
