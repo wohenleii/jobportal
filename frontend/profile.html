@@ -11,7 +11,7 @@
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
   <div class="container">
     <a class="navbar-brand" href="/index.html">Job<span>Portal</span></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
@@ -21,6 +21,8 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
         <li class="nav-item"><a class="nav-link" href="/jobs.html">Browse Jobs</a></li>
+        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html" onclick="localStorage.setItem('profileTab','applications')">My Applications</a></li>
+        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html#bookmarks" onclick="localStorage.setItem('profileTab','bookmarks')">Saved Jobs</a></li>
       </ul>
       <ul class="navbar-nav align-items-center" id="navAuth"></ul>
     </div>
@@ -35,7 +37,7 @@
       <div>
         <h2 class="fw-bold mb-1" id="profileName">Loading...</h2>
         <div class="opacity-75" id="profileEmail"></div>
-        <span class="badge bg-white text-primary mt-1" id="profileRole"></span>
+        <span class="badge bg-white text-dark border mt-1" id="profileRole"></span>
       </div>
     </div>
   </div>
@@ -102,15 +104,16 @@
   if (!api.isLoggedIn()) window.location.href = '/login.html';
   updateNavAuth();
 
-  // Check if redirected to bookmarks tab
-  if (localStorage.getItem('profileTab') === 'bookmarks') {
+  // Tab deep-link from homepage / nav
+  const profileTab = localStorage.getItem('profileTab');
+  if (profileTab === 'bookmarks' || profileTab === 'applications') {
     localStorage.removeItem('profileTab');
-    document.addEventListener('DOMContentLoaded', () => {});
-    // Switch to bookmarks tab after load
     window.addEventListener('load', () => {
-      const btn = document.querySelector('#profileTabs .nav-link:nth-child(2)') ||
-                  [...document.querySelectorAll('#profileTabs .nav-link')].find(b => b.textContent.includes('Bookmark'));
-      if (btn) btn.click();
+      if (profileTab === 'bookmarks') {
+        const btn = [...document.querySelectorAll('#profileTabs .nav-link')].find(b => b.textContent.includes('Bookmark'));
+        if (btn) btn.click();
+      }
+      // applications is the default tab
     });
   }
 

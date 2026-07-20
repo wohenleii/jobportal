@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS employers (
   company_description TEXT DEFAULT NULL,
   industry VARCHAR(100) DEFAULT NULL,
   location VARCHAR(150) DEFAULT NULL,
+  verification_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  rejection_reason TEXT DEFAULT NULL,
+  verified_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -42,7 +45,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   salary_min DECIMAL(10,2) DEFAULT NULL,
   salary_max DECIMAL(10,2) DEFAULT NULL,
   deadline DATE DEFAULT NULL,
-  status ENUM('active', 'closed', 'pending') DEFAULT 'active',
+  status ENUM('active', 'closed', 'pending', 'rejected') DEFAULT 'pending',
+  rejection_reason TEXT DEFAULT NULL,
   views INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (employer_id) REFERENCES employers(id) ON DELETE CASCADE

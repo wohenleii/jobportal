@@ -20,7 +20,8 @@ router.get('/', async (req, res) => {
 
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
-  let where = "WHERE j.status = 'active'";
+  // Hide expired jobs from the public site
+  let where = "WHERE j.status = 'active' AND (j.deadline IS NULL OR j.deadline >= CURDATE())";
 
   if (search) {
     where += ' AND (j.title LIKE ? OR j.description LIKE ? OR e.company_name LIKE ?)';
@@ -47,11 +48,11 @@ router.get('/', async (req, res) => {
   // Region-based location filter
   if (location) {
     const regionMap = {
-      north: ['woodlands', 'yishun', 'sembawang', 'admiralty', 'marsiling', 'canberra'],
-      south: ['harbourfront', 'sentosa', 'telok blangah', 'buona vista', 'pasir panjang', 'labrador'],
-      east: ['tampines', 'bedok', 'pasir ris', 'changi', 'simei', 'tanah merah', 'expo', 'upper changi'],
-      west: ['jurong', 'boon lay', 'tuas', 'clementi', 'bukit batok', 'choa chu kang', 'pioneer'],
-      central: ['orchard', 'city hall', 'raffles', 'tanjong pagar', 'chinatown', 'outram', 'novena', 'bishan', 'ang mo kio', 'thomson', 'bukit timah', 'newton', 'dhoby ghaut', 'marina'],
+      north: ['north', 'woodlands', 'yishun', 'sembawang', 'admiralty', 'marsiling', 'canberra'],
+      south: ['south', 'harbourfront', 'sentosa', 'telok blangah', 'buona vista', 'pasir panjang', 'labrador'],
+      east: ['east', 'tampines', 'bedok', 'pasir ris', 'changi', 'simei', 'tanah merah', 'expo', 'upper changi'],
+      west: ['west', 'jurong', 'boon lay', 'tuas', 'clementi', 'bukit batok', 'choa chu kang', 'pioneer'],
+      central: ['central', 'orchard', 'city hall', 'raffles', 'tanjong pagar', 'chinatown', 'outram', 'novena', 'bishan', 'ang mo kio', 'thomson', 'bukit timah', 'newton', 'dhoby ghaut', 'marina'],
       remote: ['remote'],
       hybrid: ['hybrid'],
       islandwide: ['islandwide', 'island wide', 'singapore'],
@@ -147,7 +148,7 @@ router.get('/my', authenticate, requireEmployer, async (req, res) => {
 router.get('/categories', async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT DISTINCT category FROM jobs WHERE category IS NOT NULL AND status = 'active' ORDER BY category"
+      "SELECT DISTINCT category FROM jobs WHERE category IS NOT NULL AND status = 'active' AND (deadline IS NULL OR deadline >= CURDATE()) ORDER BY category"
     );
     res.json({ success: true, categories: rows.map(r => r.category) });
   } catch (err) {
@@ -158,10 +159,11 @@ router.get('/categories', async (req, res) => {
 // GET /api/jobs/stats — public stats for homepage & browse page
 router.get('/stats', async (req, res) => {
   try {
-    const [[{ activeJobs }]] = await db.query("SELECT COUNT(*) as activeJobs FROM jobs WHERE status = 'active'");
-    const [[{ totalEmployers }]] = await db.query("SELECT COUNT(DISTINCT employer_id) as totalEmployers FROM jobs WHERE status = 'active'");
-    const [[{ shortTermJobs }]] = await db.query("SELECT COUNT(*) as shortTermJobs FROM jobs WHERE status = 'active' AND job_type = 'short-term'");
-    const [[{ partTimeJobs }]] = await db.query("SELECT COUNT(*) as partTimeJobs FROM jobs WHERE status = 'active' AND job_type = 'part-time'");
+    const openFilter = "status = 'active' AND (deadline IS NULL OR deadline >= CURDATE())";
+    const [[{ activeJobs }]] = await db.query(`SELECT COUNT(*) as activeJobs FROM jobs WHERE ${openFilter}`);
+    const [[{ totalEmployers }]] = await db.query(`SELECT COUNT(DISTINCT employer_id) as totalEmployers FROM jobs WHERE ${openFilter}`);
+    const [[{ shortTermJobs }]] = await db.query(`SELECT COUNT(*) as shortTermJobs FROM jobs WHERE ${openFilter} AND job_type = 'short-term'`);
+    const [[{ partTimeJobs }]] = await db.query(`SELECT COUNT(*) as partTimeJobs FROM jobs WHERE ${openFilter} AND job_type = 'part-time'`);
     res.json({ success: true, stats: { activeJobs, totalEmployers, shortTermJobs, partTimeJobs } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error.' });
@@ -172,7 +174,7 @@ router.get('/stats', async (req, res) => {
 router.get('/companies', async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT DISTINCT e.company_name FROM employers e JOIN jobs j ON j.employer_id = e.id WHERE j.status = 'active' ORDER BY e.company_name"
+      "SELECT DISTINCT e.company_name FROM employers e JOIN jobs j ON j.employer_id = e.id WHERE j.status = 'active' AND (j.deadline IS NULL OR j.deadline >= CURDATE()) ORDER BY e.company_name"
     );
     res.json({ success: true, companies: rows.map(r => r.company_name) });
   } catch (err) {
@@ -194,7 +196,7 @@ router.post('/smart-search', async (req, res) => {
               j.location, j.salary_min, j.salary_max, j.deadline, j.views, j.created_at,
               e.company_name, e.company_logo, e.industry
        FROM jobs j JOIN employers e ON j.employer_id = e.id
-       WHERE j.status = 'active'`
+       WHERE j.status = 'active' AND (j.deadline IS NULL OR j.deadline >= CURDATE())`
     );
 
     if (!jobs.length) {
@@ -331,15 +333,34 @@ router.post('/', authenticate, requireEmployer, async (req, res) => {
   }
 
   try {
-    const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1', [req.user.id]);
+    const [empRows] = await db.query(
+      'SELECT id, verification_status, rejection_reason FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
+      [req.user.id]
+    );
     if (empRows.length === 0) {
       return res.status(400).json({ success: false, message: 'Employer profile not found.' });
+    }
+
+    const employer = empRows[0];
+    if (employer.verification_status === 'pending') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your company is pending admin verification. You cannot post jobs until approved.',
+      });
+    }
+    if (employer.verification_status === 'rejected') {
+      return res.status(403).json({
+        success: false,
+        message: employer.rejection_reason
+          ? `Your company verification was rejected: ${employer.rejection_reason}`
+          : 'Your company verification was rejected. Please contact the admin.',
+      });
     }
 
     const [result] = await db.query(
       `INSERT INTO jobs (employer_id, title, description, requirements, location, job_type, category, salary_min, salary_max, deadline, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [empRows[0].id, title, description, requirements, location, job_type, category, salary_min || null, salary_max || null, deadline || null]
+      [employer.id, title, description, requirements, location, job_type, category, salary_min || null, salary_max || null, deadline || null]
     );
 
     res.status(201).json({ success: true, message: 'Job submitted for review.', jobId: result.insertId });
@@ -355,10 +376,67 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
   const { title, description, requirements, location, job_type, category, salary_min, salary_max, deadline, status } = req.body;
 
   try {
+    const [empRows] = await db.query(
+      'SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
+      [req.user.id]
+    );
+    if (empRows.length === 0 && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Employer profile not found.' });
+    }
+
+    const [jobRows] = await db.query('SELECT * FROM jobs WHERE id = ?', [id]);
+    if (jobRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Job not found.' });
+    }
+    const existing = jobRows[0];
+
+    if (req.user.role !== 'admin' && empRows[0].id !== existing.employer_id) {
+      return res.status(403).json({ success: false, message: 'Not authorized to update this job.' });
+    }
+
+    // Rejected jobs cannot be edited by employers
+    if (req.user.role !== 'admin' && existing.status === 'rejected') {
+      return res.status(403).json({
+        success: false,
+        message: 'Rejected jobs cannot be edited.',
+      });
+    }
+
+    // Employers can only toggle active <-> closed; cannot self-approve pending/rejected
+    let nextStatus = existing.status;
+    if (status !== undefined && status !== null && status !== '') {
+      if (req.user.role === 'admin') {
+        nextStatus = status;
+      } else if (status === 'closed' && existing.status === 'active') {
+        nextStatus = 'closed';
+      } else if (status === 'active' && existing.status === 'closed') {
+        nextStatus = 'active';
+      } else if (status !== existing.status) {
+        return res.status(403).json({
+          success: false,
+          message: 'You cannot change this job status. Pending and rejected jobs require admin review.',
+        });
+      }
+    }
+
+    // If only status was sent (close/reopen), keep other fields
+    const nextTitle = title !== undefined ? title : existing.title;
+    const nextDescription = description !== undefined ? description : existing.description;
+    const nextRequirements = requirements !== undefined ? requirements : existing.requirements;
+    const nextLocation = location !== undefined ? location : existing.location;
+    const nextJobType = job_type !== undefined ? job_type : existing.job_type;
+    const nextCategory = category !== undefined ? category : existing.category;
+    const nextSalaryMin = salary_min !== undefined ? (salary_min || null) : existing.salary_min;
+    const nextSalaryMax = salary_max !== undefined ? (salary_max || null) : existing.salary_max;
+    const nextDeadline = deadline !== undefined ? (deadline || null) : existing.deadline;
+
     await db.query(
       `UPDATE jobs SET title=?, description=?, requirements=?, location=?, job_type=?, category=?, salary_min=?, salary_max=?, deadline=?, status=?
        WHERE id=?`,
-      [title, description, requirements, location, job_type, category, salary_min || null, salary_max || null, deadline || null, status, id]
+      [
+        nextTitle, nextDescription, nextRequirements, nextLocation, nextJobType, nextCategory,
+        nextSalaryMin, nextSalaryMax, nextDeadline, nextStatus, id,
+      ]
     );
     res.json({ success: true, message: 'Job updated successfully.' });
   } catch (err) {

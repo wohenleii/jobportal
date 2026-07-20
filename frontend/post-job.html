@@ -11,7 +11,7 @@
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
   <div class="container">
     <a class="navbar-brand" href="/index.html">Job<span>Portal</span></a>
     <div class="collapse navbar-collapse">
@@ -24,7 +24,7 @@
   </div>
 </nav>
 
-<div class="bg-primary text-white py-4">
+<div class="page-hero">
   <div class="container">
     <h1 class="fw-bold mb-0">Post a Job</h1>
     <p class="opacity-75 mb-0 mt-1">Reach thousands of qualified candidates</p>
@@ -34,7 +34,7 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-lg-8">
-      <div class="bg-white rounded-3 p-4 shadow-sm border">
+      <div class="bg-white rounded-3 p-4 border">
         <div id="formAlert" class="alert d-none"></div>
 
         <form id="postJobForm" novalidate>
@@ -119,6 +119,8 @@
   // Set min date for deadline
   document.getElementById('deadline').min = new Date().toISOString().split('T')[0];
 
+  let companyApproved = user.role === 'admin';
+
   function showAlert(msg, type = 'danger') {
     const el = document.getElementById('formAlert');
     el.className = `alert alert-${type}`;
@@ -127,8 +129,34 @@
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  async function checkCompanyVerification() {
+    if (user.role === 'admin') return;
+    try {
+      const data = await api.getEmployerProfile();
+      const profile = data.profile || {};
+      const status = profile.verification_status || 'pending';
+      companyApproved = status === 'approved';
+      if (status === 'pending') {
+        showAlert('Your company is pending admin verification. You cannot post jobs until approved.', 'warning');
+        document.getElementById('submitBtn').disabled = true;
+      } else if (status === 'rejected') {
+        const reason = profile.rejection_reason
+          ? ` Reason: ${profile.rejection_reason}`
+          : '';
+        showAlert(`Your company verification was rejected.${reason} You cannot post jobs until approved.`, 'danger');
+        document.getElementById('submitBtn').disabled = true;
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+
   document.getElementById('postJobForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!companyApproved) {
+      showAlert('Your company must be approved by an admin before posting jobs.');
+      return;
+    }
     const btn = document.getElementById('submitBtn');
 
     const payload = {
@@ -153,11 +181,19 @@
 
     try {
       const data = await api.createJob(payload);
-      showAlert('✅ Job posted successfully! Redirecting...', 'success');
+      showAlert('Job posted successfully! Redirecting...', 'success');
       setTimeout(() => window.location.href = '/jobs.html', 1500);
     } catch (err) {
       showAlert(err.message || 'Failed to post job.');
       btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send me-2"></i>Post Job';
+    }
+  });
+
+  checkCompanyVerification();
+</script>
+</body>
+</html>
       btn.innerHTML = '<i class="bi bi-send me-2"></i>Post Job';
     }
   });

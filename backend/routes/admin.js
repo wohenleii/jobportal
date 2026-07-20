@@ -14,6 +14,9 @@ router.get('/stats', async (req, res) => {
     const [[{ activeJobs }]] = await db.query("SELECT COUNT(*) as activeJobs FROM jobs WHERE status = 'active'");
     const [[{ totalApplications }]] = await db.query('SELECT COUNT(*) as totalApplications FROM applications');
     const [[{ totalEmployers }]] = await db.query('SELECT COUNT(*) as totalEmployers FROM employers');
+    const [[{ pendingEmployers }]] = await db.query(
+      "SELECT COUNT(*) as pendingEmployers FROM employers WHERE verification_status = 'pending'"
+    );
     const [[{ totalViews }]] = await db.query('SELECT SUM(views) as totalViews FROM jobs');
 
     // Jobs by category
@@ -46,6 +49,7 @@ router.get('/stats', async (req, res) => {
         activeJobs,
         totalApplications,
         totalEmployers,
+        pendingEmployers,
         totalViews: totalViews || 0,
       },
       jobsByCategory,
@@ -55,6 +59,100 @@ router.get('/stats', async (req, res) => {
     });
   } catch (err) {
     console.error('Admin stats error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// GET /api/admin/employers — list companies for verification
+router.get('/employers', async (req, res) => {
+  const { page = 1, limit = 20, status = '' } = req.query;
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  const params = [];
+  let where = '';
+
+  if (status) {
+    where = 'WHERE e.verification_status = ?';
+    params.push(status);
+  }
+
+  try {
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) as total FROM employers e ${where}`,
+      params
+    );
+    const [employers] = await db.query(
+      `SELECT e.id, e.company_name, e.company_website, e.company_description, e.industry, e.location,
+              e.verification_status, e.rejection_reason, e.verified_at, e.created_at,
+              u.id as user_id, u.name as contact_name, u.email as contact_email
+       FROM employers e
+       JOIN users u ON e.user_id = u.id
+       ${where}
+       ORDER BY
+         CASE e.verification_status WHEN 'pending' THEN 0 WHEN 'rejected' THEN 1 ELSE 2 END,
+         e.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, parseInt(limit), offset]
+    );
+    res.json({
+      success: true,
+      employers,
+      pagination: { total, page: parseInt(page), limit: parseInt(limit) },
+    });
+  } catch (err) {
+    console.error('Admin get employers error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// PUT /api/admin/employers/:id/status — approve or reject company
+router.put('/employers/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status, rejection_reason = '' } = req.body;
+  const validStatuses = ['pending', 'approved', 'rejected'];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid status. Use pending, approved, or rejected.' });
+  }
+
+  if (status === 'rejected' && !String(rejection_reason).trim()) {
+    return res.status(400).json({ success: false, message: 'Rejection reason is required.' });
+  }
+
+  try {
+    const [rows] = await db.query('SELECT id FROM employers WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Employer not found.' });
+    }
+
+    if (status === 'approved') {
+      await db.query(
+        `UPDATE employers
+         SET verification_status = 'approved', rejection_reason = NULL, verified_at = NOW()
+         WHERE id = ?`,
+        [id]
+      );
+      return res.json({ success: true, message: 'Company approved.' });
+    }
+
+    if (status === 'rejected') {
+      await db.query(
+        `UPDATE employers
+         SET verification_status = 'rejected', rejection_reason = ?, verified_at = NULL
+         WHERE id = ?`,
+        [String(rejection_reason).trim(), id]
+      );
+      return res.json({ success: true, message: 'Company rejected.' });
+    }
+
+    await db.query(
+      `UPDATE employers
+       SET verification_status = 'pending', rejection_reason = NULL, verified_at = NULL
+       WHERE id = ?`,
+      [id]
+    );
+    res.json({ success: true, message: 'Company set back to pending.' });
+  } catch (err) {
+    console.error('Admin update employer status error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
@@ -99,17 +197,23 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
-// GET /api/admin/jobs — list all jobs (including pending/closed)
+// GET /api/admin/jobs — list all jobs (including pending/rejected/past)
 router.get('/jobs', async (req, res) => {
   const { page = 1, limit = 20, status = '' } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
-  let where = '';
+  const clauses = [];
 
-  if (status) {
-    where = 'WHERE j.status = ?';
+  if (status === 'past') {
+    clauses.push('j.deadline IS NOT NULL AND j.deadline < CURDATE()');
+  } else if (status) {
+    clauses.push('j.status = ?');
     params.push(status);
+    // Keep current filters focused on jobs that are still open
+    clauses.push('(j.deadline IS NULL OR j.deadline >= CURDATE())');
   }
+
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
 
   try {
     const [[{ total }]] = await db.query(
@@ -127,18 +231,46 @@ router.get('/jobs', async (req, res) => {
   }
 });
 
-// PUT /api/admin/jobs/:id/status — update job status
+// PUT /api/admin/jobs/:id/status — approve, reject, close, or set pending
 router.put('/jobs/:id/status', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
-  const validStatuses = ['active', 'closed', 'pending'];
+  const { status, rejection_reason = '' } = req.body;
+  const validStatuses = ['active', 'closed', 'pending', 'rejected'];
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: 'Invalid status.' });
   }
 
+  if (status === 'rejected' && !String(rejection_reason).trim()) {
+    return res.status(400).json({ success: false, message: 'Rejection reason is required.' });
+  }
+
   try {
-    await db.query('UPDATE jobs SET status = ? WHERE id = ?', [status, id]);
+    const [rows] = await db.query('SELECT id FROM jobs WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Job not found.' });
+    }
+
+    if (status === 'rejected') {
+      await db.query(
+        'UPDATE jobs SET status = ?, rejection_reason = ? WHERE id = ?',
+        ['rejected', String(rejection_reason).trim(), id]
+      );
+      return res.json({ success: true, message: 'Job rejected.' });
+    }
+
+    if (status === 'active') {
+      await db.query(
+        'UPDATE jobs SET status = ?, rejection_reason = NULL WHERE id = ?',
+        ['active', id]
+      );
+      return res.json({ success: true, message: 'Job approved.' });
+    }
+
+    await db.query(
+      'UPDATE jobs SET status = ?, rejection_reason = NULL WHERE id = ?',
+      [status, id]
+    );
     res.json({ success: true, message: `Job status updated to ${status}.` });
   } catch (err) {
     console.error('Admin update job status error:', err);

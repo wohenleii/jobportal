@@ -10,35 +10,53 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
 <!-- Sidebar -->
-<nav class="sidebar" id="sidebar">
-  <div class="sidebar-brand">Job<span>Portal</span> <small class="opacity-50 fs-6">Admin</small></div>
-  <ul class="nav flex-column mt-2">
-    <li class="nav-item"><a class="nav-link active" href="#" onclick="showSection('dashboard', this)"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('users', this)"><i class="bi bi-people"></i> Users</a></li>
-    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('jobs', this)"><i class="bi bi-briefcase"></i> Jobs</a></li>
-    <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('analytics', this)"><i class="bi bi-bar-chart"></i> Analytics</a></li>
-    <li class="nav-item mt-4"><a class="nav-link" href="/index.html" target="_blank"><i class="bi bi-house"></i> View Site</a></li>
-    <li class="nav-item"><a class="nav-link text-danger" href="#" onclick="api.logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-  </ul>
+<nav class="sidebar" id="sidebar" aria-label="Admin navigation">
+  <div class="sidebar-brand">
+    <div class="brand-text">
+      Job<span>Portal</span>
+      <small class="d-block">Admin</small>
+    </div>
+    <button type="button" class="sidebar-collapse-btn d-none d-lg-inline-flex" id="sidebarCollapseBtn" aria-label="Collapse sidebar" onclick="toggleSidebarCollapse()">
+      <i class="bi bi-layout-sidebar-inset"></i>
+    </button>
+  </div>
+  <div class="sidebar-nav">
+    <ul class="nav flex-column nav-main">
+      <li class="nav-item"><a class="nav-link active" href="#" onclick="showSection('dashboard', this)"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('companies', this)"><i class="bi bi-building-check"></i><span>Companies</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('users', this)"><i class="bi bi-people"></i><span>Users</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('jobs', this)"><i class="bi bi-briefcase"></i><span>Jobs</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('analytics', this)"><i class="bi bi-bar-chart"></i><span>Analytics</span></a></li>
+    </ul>
+    <ul class="nav flex-column sidebar-footer">
+      <li class="nav-item"><a class="nav-link" href="/index.html" target="_blank"><i class="bi bi-house"></i><span>View Site</span></a></li>
+      <li class="nav-item"><a class="nav-link text-danger" href="#" onclick="api.logout()"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+    </ul>
+  </div>
 </nav>
 <!-- Main Content -->
-<div class="main-content">
+<div class="main-content" id="mainContent">
   <!-- Top Bar -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" onclick="document.getElementById('sidebar').classList.toggle('open')">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" aria-label="Open menu" onclick="openMobileSidebar()">
         <i class="bi bi-list"></i>
       </button>
-      <h4 class="fw-bold d-inline" id="sectionTitle">Dashboard</h4>
+      <h4 class="fw-bold mb-0" id="sectionTitle">Dashboard</h4>
     </div>
     <div class="d-flex align-items-center gap-2">
       <span class="text-muted small" id="adminName"></span>
-      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:700" id="adminAvatar">A</div>
+      <div class="admin-avatar" id="adminAvatar">A</div>
     </div>
   </div>
   <!-- ── Dashboard Section ─────────────────────────────────────────────── -->
   <div id="section-dashboard">
+    <div class="page-heading">
+      <h1 class="h4">Overview</h1>
+      <p>Monitor jobs, users, and items waiting for review.</p>
+    </div>
     <!-- Stat Cards -->
     <div class="row g-3 mb-4" id="statCards">
       <div class="col-12 text-center py-4"><div class="spinner-border text-primary"></div></div>
@@ -46,16 +64,41 @@
     <!-- Charts Row -->
     <div class="row g-3 mb-4">
       <div class="col-lg-6">
-        <div class="stat-card">
-          <h6 class="fw-bold mb-3">Jobs by Category</h6>
-          <canvas id="categoryChart" height="220"></canvas>
+        <div class="stat-card chart-card">
+          <h6 class="fw-bold mb-2">Jobs by Category</h6>
+          <canvas id="categoryChart" height="180" aria-label="Jobs by category chart"></canvas>
+          <p class="chart-summary" id="categoryChartSummary"></p>
         </div>
       </div>
       <div class="col-lg-6">
-        <div class="stat-card">
-          <h6 class="fw-bold mb-3">Jobs by Type</h6>
-          <canvas id="typeChart" height="220"></canvas>
+        <div class="stat-card chart-card">
+          <h6 class="fw-bold mb-2">Jobs by Type</h6>
+          <canvas id="typeChart" height="180" aria-label="Jobs by type chart"></canvas>
+          <p class="chart-summary" id="typeChartSummary"></p>
         </div>
+      </div>
+    </div>
+    <!-- Jobs requiring review -->
+    <div class="stat-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Jobs requiring review</h6>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="goToJobsSection()">View all</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Job Title</th>
+              <th>Company</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pendingReviewTable">
+            <tr><td colspan="5" class="text-center py-3 text-muted small">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
     <!-- Top Jobs Table -->
@@ -69,6 +112,39 @@
           <tbody id="topJobsTable"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+  <!-- ── Companies Section ─────────────────────────────────────────────── -->
+  <div id="section-companies" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <select class="form-select form-select-sm w-auto" id="companyStatusFilter" onchange="loadCompanies()">
+        <option value="">All Status</option>
+        <option value="pending" selected>Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <span class="text-muted small" id="companyCount"></span>
+    </div>
+    <div class="stat-card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Company</th>
+              <th>Contact</th>
+              <th>Industry</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Registered</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="companiesTable">
+            <tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="companiesPagination" class="d-flex justify-content-center mt-3"></div>
     </div>
   </div>
   <!-- ── Users Section ─────────────────────────────────────────────────── -->
@@ -103,9 +179,10 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <select class="form-select form-select-sm w-auto" id="jobStatusFilter" onchange="loadAdminJobs()">
         <option value="">All Status</option>
-        <option value="active">Active</option>
-        <option value="closed">Closed</option>
-        <option value="pending">Pending</option>
+        <option value="pending" selected>Pending</option>
+        <option value="active">Active (Approved)</option>
+        <option value="rejected">Rejected</option>
+        <option value="past">Past Jobs</option>
       </select>
       <span class="text-muted small" id="jobCount"></span>
     </div>
@@ -152,6 +229,67 @@
     </div>
   </div>
 </div><!-- /main-content -->
+
+<!-- Reject Company Modal -->
+<div class="modal fade" id="rejectCompanyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Reject Company</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Rejecting <strong id="rejectCompanyName"></strong>. Please provide a reason:</p>
+        <input type="hidden" id="rejectCompanyId" />
+        <textarea class="form-control" id="rejectReasonInput" rows="3" placeholder="e.g. Incomplete company details, invalid website..." required></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmRejectCompany()">Reject Company</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Job Modal -->
+<div class="modal fade" id="rejectJobModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Reject Job Post</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Rejecting <strong id="rejectJobTitle"></strong>. Please provide a reason:</p>
+        <input type="hidden" id="rejectJobId" />
+        <textarea class="form-control" id="rejectJobReasonInput" rows="3" placeholder="e.g. Incomplete job description, salary not specified..." required></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmRejectJob()">Reject Job</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Job Details Modal -->
+<div class="modal fade" id="jobDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-briefcase me-2 text-primary"></i>Job Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="jobDetailsBody">
+        <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toastContainer" class="toast-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
@@ -161,33 +299,96 @@
   if (!user || user.role !== 'admin') window.location.href = '/login.html';
   document.getElementById('adminName').textContent = user.name;
   document.getElementById('adminAvatar').textContent = user.name.charAt(0).toUpperCase();
-  let usersPage = 1, jobsPage = 1;
+  let usersPage = 1, jobsPage = 1, companiesPage = 1;
   let categoryChart, typeChart, viewsChart, appsChart;
+  let rejectModal, rejectJobModal, jobDetailsModal;
+
+  function toggleSidebarCollapse() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('mainContent');
+    sidebar.classList.toggle('collapsed');
+    main.classList.toggle('sidebar-collapsed');
+  }
+
+  function openMobileSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebarBackdrop').classList.add('show');
+  }
+
+  function closeMobileSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('show');
+  }
+
+  function goToJobsSection() {
+    const link = [...document.querySelectorAll('.sidebar .nav-link')].find(a => a.textContent.includes('Jobs'));
+    showSection('jobs', link);
+    document.getElementById('jobStatusFilter').value = 'pending';
+    loadAdminJobs();
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function showSection(name, link) {
     document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
     document.getElementById(`section-${name}`).classList.remove('d-none');
     document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
     if (link) link.classList.add('active');
     document.getElementById('sectionTitle').textContent =
-      { dashboard: 'Dashboard', users: 'Users', jobs: 'Jobs', analytics: 'Analytics' }[name];
+      { dashboard: 'Dashboard', companies: 'Companies', users: 'Users', jobs: 'Jobs', analytics: 'Analytics' }[name];
+    if (name === 'companies') loadCompanies();
     if (name === 'users') loadUsers();
     if (name === 'jobs') loadAdminJobs();
     if (name === 'analytics') loadAnalytics();
+    closeMobileSidebar();
   }
   // ── Dashboard ────────────────────────────────────────────────────────────
+  const CHART_COLORS = ['#2563EB','#16A34A','#F59E0B','#DC2626','#7C3AED','#0891B2','#DB2777','#65A30D'];
+
+  function groupSmallCategories(rows, minShare = 0.04) {
+    const total = rows.reduce((s, r) => s + Number(r.count || 0), 0) || 1;
+    const sorted = [...rows].sort((a, b) => Number(b.count) - Number(a.count));
+    const main = [];
+    let other = 0;
+    sorted.forEach(r => {
+      const count = Number(r.count || 0);
+      if (count / total < minShare && sorted.length > 5) other += count;
+      else main.push({ category: r.category || 'Other', count });
+    });
+    if (other > 0) main.push({ category: 'Other', count: other });
+    return main;
+  }
+
   async function loadDashboard() {
     try {
       const data = await api.getAdminStats();
       const { stats, jobsByCategory, jobsByType, topJobs } = data;
+
+      let pendingJobsCount = 0;
+      let pendingJobs = [];
+      try {
+        const pendingData = await api.getAdminJobs({ status: 'pending', page: 1, limit: 5 });
+        pendingJobsCount = pendingData.pagination?.total || 0;
+        pendingJobs = pendingData.jobs || [];
+      } catch (e) { console.warn(e); }
+
+      const pendingReviews = (stats.pendingEmployers || 0) + pendingJobsCount;
+
       document.getElementById('statCards').innerHTML = `
         <div class="col-sm-6 col-xl-3">
           <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <div class="title">Total Users</div>
-                <div class="value">${stats.totalUsers}</div>
+                <div class="title">Total Jobs</div>
+                <div class="value">${stats.totalJobs ?? 0}</div>
               </div>
-              <div class="icon bg-primary bg-opacity-10 text-primary">👥</div>
+              <div class="icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-briefcase-fill"></i></div>
             </div>
           </div>
         </div>
@@ -195,10 +396,10 @@
           <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <div class="title">Active Jobs</div>
-                <div class="value">${stats.activeJobs}</div>
+                <div class="title">Active Users</div>
+                <div class="value">${stats.totalUsers ?? 0}</div>
               </div>
-              <div class="icon bg-success bg-opacity-10 text-success">💼</div>
+              <div class="icon bg-success bg-opacity-10 text-success"><i class="bi bi-people-fill"></i></div>
             </div>
           </div>
         </div>
@@ -207,9 +408,9 @@
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <div class="title">Applications</div>
-                <div class="value">${stats.totalApplications}</div>
+                <div class="value">${stats.totalApplications ?? 0}</div>
               </div>
-              <div class="icon bg-warning bg-opacity-10 text-warning">📋</div>
+              <div class="icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-file-earmark-text-fill"></i></div>
             </div>
           </div>
         </div>
@@ -217,45 +418,232 @@
           <div class="stat-card">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <div class="title">Total Views</div>
-                <div class="value">${stats.totalViews || 0}</div>
+                <div class="title">Pending Reviews</div>
+                <div class="value">${pendingReviews}</div>
               </div>
-              <div class="icon bg-info bg-opacity-10 text-info">👁️</div>
+              <div class="icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-hourglass-split"></i></div>
             </div>
           </div>
         </div>
       `;
-      // Category chart
+
+      const categories = groupSmallCategories(jobsByCategory || []);
       if (categoryChart) categoryChart.destroy();
       categoryChart = new Chart(document.getElementById('categoryChart'), {
-        type: 'doughnut',
+        type: 'bar',
         data: {
-          labels: jobsByCategory.map(r => r.category || 'Other'),
-          datasets: [{ data: jobsByCategory.map(r => r.count), backgroundColor: ['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d'] }]
+          labels: categories.map(r => r.category),
+          datasets: [{
+            label: 'Jobs',
+            data: categories.map(r => r.count),
+            backgroundColor: CHART_COLORS,
+            borderRadius: 6,
+            borderSkipped: false,
+          }],
         },
-        options: { plugins: { legend: { position: 'right' } }, responsive: true }
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.parsed.x} job${ctx.parsed.x === 1 ? '' : 's'}`,
+              },
+            },
+          },
+          scales: {
+            x: { beginAtZero: true, grid: { color: '#E2E8F0' }, ticks: { precision: 0 } },
+            y: { grid: { display: false } },
+          },
+        },
       });
-      // Type chart
+      document.getElementById('categoryChartSummary').textContent =
+        categories.length
+          ? `Top category: ${categories[0].category} (${categories[0].count}). ${categories.map(c => `${c.category}: ${c.count}`).join('; ')}.`
+          : 'No category data available.';
+
+      const types = [...(jobsByType || [])].sort((a, b) => Number(b.count) - Number(a.count));
+      const labelPlugin = {
+        id: 'valueLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, i) => {
+            const meta = chart.getDatasetMeta(i);
+            meta.data.forEach((bar, idx) => {
+              const val = dataset.data[idx];
+              ctx.save();
+              ctx.fillStyle = '#64748B';
+              ctx.font = '600 11px Inter, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(String(val), bar.x, bar.y - 6);
+              ctx.restore();
+            });
+          });
+        },
+      };
       if (typeChart) typeChart.destroy();
       typeChart = new Chart(document.getElementById('typeChart'), {
         type: 'bar',
         data: {
-          labels: jobsByType.map(r => r.job_type),
-          datasets: [{ label: 'Jobs', data: jobsByType.map(r => r.count), backgroundColor: '#2563eb', borderRadius: 6 }]
+          labels: types.map(r => r.job_type),
+          datasets: [{
+            label: 'Jobs',
+            data: types.map(r => r.count),
+            backgroundColor: '#2563EB',
+            borderRadius: 8,
+            borderSkipped: false,
+            maxBarThickness: 40,
+          }],
         },
-        options: { plugins: { legend: { display: false } }, responsive: true, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          layout: { padding: { top: 16 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y} jobs` } },
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#E2E8F0' }, ticks: { precision: 0 } },
+            x: { grid: { display: false } },
+          },
+        },
+        plugins: [labelPlugin],
       });
-      // Top jobs table
-      document.getElementById('topJobsTable').innerHTML = topJobs.map((j, i) => `
+      document.getElementById('typeChartSummary').textContent =
+        types.length
+          ? types.map(t => `${t.job_type}: ${t.count}`).join('; ') + '.'
+          : 'No job type data available.';
+
+      document.getElementById('pendingReviewTable').innerHTML = pendingJobs.length
+        ? pendingJobs.map(j => `
+          <tr>
+            <td class="fw-semibold">${escapeHtml(j.title)}</td>
+            <td class="text-muted small">${escapeHtml(j.company_name)}</td>
+            <td class="text-muted small">${j.created_at ? new Date(j.created_at).toLocaleDateString() : '—'}</td>
+            <td><span class="status-badge pending">Pending</span></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-primary" onclick="reviewPendingJob(${j.id})">Review</button>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" class="text-center text-muted py-3">No jobs waiting for review.</td></tr>';
+
+      document.getElementById('topJobsTable').innerHTML = (topJobs || []).map((j, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td class="fw-semibold">${j.title}</td>
-          <td class="text-muted">${j.company_name}</td>
+          <td class="fw-semibold">${escapeHtml(j.title)}</td>
+          <td class="text-muted">${escapeHtml(j.company_name)}</td>
           <td><span class="badge bg-primary">${j.views}</span></td>
         </tr>
-      `).join('');
+      `).join('') || '<tr><td colspan="4" class="text-center text-muted">No jobs yet.</td></tr>';
     } catch (err) {
       showToast('Failed to load dashboard stats', 'danger');
+    }
+  }
+
+  function reviewPendingJob(id) {
+    goToJobsSection();
+    setTimeout(() => openJobDetails(id), 300);
+  }
+  // ── Companies ────────────────────────────────────────────────────────────
+  let companiesCache = {};
+
+  function verificationBadge(status) {
+    if (status === 'approved') return '<span class="status-badge active">Approved</span>';
+    if (status === 'rejected') return '<span class="status-badge rejected">Rejected</span>';
+    return '<span class="status-badge pending">Pending</span>';
+  }
+
+  async function loadCompanies() {
+    const status = document.getElementById('companyStatusFilter').value;
+    try {
+      const data = await api.getAdminEmployers({ status, page: companiesPage, limit: 15 });
+      companiesCache = {};
+      (data.employers || []).forEach(e => { companiesCache[e.id] = e; });
+      document.getElementById('companyCount').textContent = `${data.pagination.total} companies`;
+      document.getElementById('companiesTable').innerHTML = (data.employers || []).length
+        ? data.employers.map(e => `
+          <tr>
+            <td>
+              <div class="fw-semibold">${escapeHtml(e.company_name)}</div>
+              ${e.company_website ? `<a href="${escapeHtml(e.company_website)}" target="_blank" class="small text-muted">${escapeHtml(e.company_website)}</a>` : ''}
+              ${e.verification_status === 'rejected' && e.rejection_reason
+                ? `<div class="small text-danger mt-1"><i class="bi bi-info-circle me-1"></i>${escapeHtml(e.rejection_reason)}</div>`
+                : ''}
+            </td>
+            <td>
+              <div class="fw-semibold small">${escapeHtml(e.contact_name)}</div>
+              <div class="text-muted small">${escapeHtml(e.contact_email)}</div>
+            </td>
+            <td class="text-muted small">${escapeHtml(e.industry) || '—'}</td>
+            <td class="text-muted small">${escapeHtml(e.location) || '—'}</td>
+            <td>${verificationBadge(e.verification_status)}</td>
+            <td class="text-muted small">${new Date(e.created_at).toLocaleDateString()}</td>
+            <td class="text-nowrap">
+              ${e.verification_status !== 'approved'
+                ? `<button class="btn btn-sm btn-success me-1" title="Approve" onclick="approveCompany(${e.id})"><i class="bi bi-check-lg"></i></button>`
+                : ''}
+              ${e.verification_status !== 'rejected'
+                ? `<button class="btn btn-sm btn-outline-danger" title="Reject" onclick="openRejectModal(${e.id})"><i class="bi bi-x-lg"></i></button>`
+                : `<button class="btn btn-sm btn-outline-secondary" title="Set Pending" onclick="setCompanyPending(${e.id})"><i class="bi bi-arrow-counterclockwise"></i></button>`}
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="7" class="text-center text-muted py-4">No companies found.</td></tr>';
+      renderAdminPagination('companiesPagination', data.pagination, p => { companiesPage = p; loadCompanies(); });
+    } catch (err) {
+      showToast(err.message || 'Failed to load companies', 'danger');
+    }
+  }
+
+  async function approveCompany(id) {
+    if (!confirm('Approve this company? They will be able to post jobs.')) return;
+    try {
+      await api.updateEmployerStatus(id, 'approved');
+      showToast('Company approved', 'success');
+      loadCompanies();
+      loadDashboard();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  function openRejectModal(id) {
+    const company = companiesCache[id];
+    document.getElementById('rejectCompanyId').value = id;
+    document.getElementById('rejectCompanyName').textContent = company ? company.company_name : 'this company';
+    document.getElementById('rejectReasonInput').value = '';
+    rejectModal.show();
+  }
+
+  async function confirmRejectCompany() {
+    const id = document.getElementById('rejectCompanyId').value;
+    const reason = document.getElementById('rejectReasonInput').value.trim();
+    if (!reason) {
+      showToast('Please enter a rejection reason', 'warning');
+      return;
+    }
+    try {
+      await api.updateEmployerStatus(id, 'rejected', reason);
+      rejectModal.hide();
+      showToast('Company rejected', 'success');
+      loadCompanies();
+      loadDashboard();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  async function setCompanyPending(id) {
+    try {
+      await api.updateEmployerStatus(id, 'pending');
+      showToast('Company set to pending', 'success');
+      loadCompanies();
+    } catch (err) {
+      showToast(err.message, 'danger');
     }
   }
   // ── Users ────────────────────────────────────────────────────────────────
@@ -292,52 +680,163 @@
     }
   }
   // ── Jobs ─────────────────────────────────────────────────────────────────
+  let jobsCache = {};
+
+  function jobStatusBadge(status, job) {
+    const isPast = job && job.deadline && new Date(job.deadline) < new Date(new Date().toDateString());
+    if (isPast) return '<span class="status-badge expired">Expired</span>';
+    if (status === 'active') return '<span class="status-badge active">Active</span>';
+    if (status === 'rejected') return '<span class="status-badge rejected">Rejected</span>';
+    if (status === 'closed') return '<span class="status-badge closed">Closed</span>';
+    return '<span class="status-badge pending">Pending</span>';
+  }
+
   async function loadAdminJobs() {
     const status = document.getElementById('jobStatusFilter').value;
     try {
       const data = await api.getAdminJobs({ status, page: jobsPage, limit: 15 });
+      jobsCache = {};
+      (data.jobs || []).forEach(j => { jobsCache[j.id] = j; });
       document.getElementById('jobCount').textContent = `${data.pagination.total} jobs`;
-      document.getElementById('jobsTable').innerHTML = data.jobs.map(j => `
+      document.getElementById('jobsTable').innerHTML = (data.jobs || []).length
+        ? data.jobs.map(j => `
         <tr>
           <td class="text-muted small">${j.id}</td>
-          <td class="fw-semibold">${j.title}</td>
-          <td class="text-muted small">${j.company_name}</td>
-          <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
           <td>
-            <select class="form-select form-select-sm w-auto" onchange="updateJobStatus(${j.id}, this.value)" style="min-width:90px">
-              <option value="active" ${j.status === 'active' ? 'selected' : ''}>Active</option>
-              <option value="closed" ${j.status === 'closed' ? 'selected' : ''}>Closed</option>
-              <option value="pending" ${j.status === 'pending' ? 'selected' : ''}>Pending</option>
-            </select>
+            <a href="#" class="fw-semibold text-decoration-none" onclick="openJobDetails(${j.id});return false;">${escapeHtml(j.title)}</a>
+            ${j.deadline ? `<div class="small text-muted">Deadline: ${new Date(j.deadline).toLocaleDateString()}</div>` : ''}
+            ${j.status === 'rejected' && j.rejection_reason
+              ? `<div class="small text-danger mt-1"><i class="bi bi-info-circle me-1"></i>${escapeHtml(j.rejection_reason)}</div>`
+              : ''}
           </td>
+          <td class="text-muted small">${escapeHtml(j.company_name)}</td>
+          <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
+          <td>${jobStatusBadge(j.status, j)}</td>
           <td>${j.views}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteJobAdmin(${j.id}, this)"><i class="bi bi-trash"></i></button>
+          <td class="text-nowrap">
+            ${status === 'past' ? '<span class="text-muted small">—</span>' : `
+            ${j.status !== 'active'
+              ? `<button class="btn btn-sm btn-success me-1" title="Approve" onclick="approveJob(${j.id})"><i class="bi bi-check-lg"></i></button>`
+              : ''}
+            ${j.status !== 'rejected'
+              ? `<button class="btn btn-sm btn-outline-danger" title="Reject" onclick="openRejectJobModal(${j.id})"><i class="bi bi-x-lg"></i></button>`
+              : `<button class="btn btn-sm btn-outline-secondary" title="Set Pending" onclick="setJobPending(${j.id})"><i class="bi bi-arrow-counterclockwise"></i></button>`}
+            `}
           </td>
         </tr>
-      `).join('');
+      `).join('')
+        : '<tr><td colspan="7" class="text-center text-muted py-4">No jobs found.</td></tr>';
       renderAdminPagination('jobsPagination', data.pagination, p => { jobsPage = p; loadAdminJobs(); });
     } catch (err) {
-      showToast('Failed to load jobs', 'danger');
+      showToast(err.message || 'Failed to load jobs', 'danger');
     }
   }
-  async function updateJobStatus(id, status) {
+
+  async function approveJob(id) {
+    if (!confirm('Approve this job post? It will become visible to students.')) return;
     try {
-      await api.updateJobStatus(id, status);
-      showToast(`Job status updated to ${status}`, 'success');
+      await api.updateJobStatus(id, 'active');
+      showToast('Job approved', 'success');
+      loadAdminJobs();
     } catch (err) {
       showToast(err.message, 'danger');
     }
   }
-  async function deleteJobAdmin(id, btn) {
-    if (!confirm('Delete this job? This cannot be undone.')) return;
+
+  function openRejectJobModal(id) {
+    const job = jobsCache[id];
+    document.getElementById('rejectJobId').value = id;
+    document.getElementById('rejectJobTitle').textContent = job ? job.title : 'this job';
+    document.getElementById('rejectJobReasonInput').value = '';
+    rejectJobModal.show();
+  }
+
+  async function confirmRejectJob() {
+    const id = document.getElementById('rejectJobId').value;
+    const reason = document.getElementById('rejectJobReasonInput').value.trim();
+    if (!reason) {
+      showToast('Please enter a rejection reason', 'warning');
+      return;
+    }
     try {
-      await api.deleteJob(id);
-      btn.closest('tr').remove();
-      showToast('Job deleted', 'success');
+      await api.updateJobStatus(id, 'rejected', reason);
+      rejectJobModal.hide();
+      showToast('Job rejected', 'success');
+      loadAdminJobs();
     } catch (err) {
       showToast(err.message, 'danger');
     }
+  }
+
+  async function setJobPending(id) {
+    try {
+      await api.updateJobStatus(id, 'pending');
+      showToast('Job set to pending', 'success');
+      loadAdminJobs();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  async function openJobDetails(id) {
+    const body = document.getElementById('jobDetailsBody');
+    body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+    jobDetailsModal.show();
+
+    try {
+      let job = jobsCache[id];
+      if (!job || !job.description) {
+        const data = await api.getJob(id);
+        job = data.job;
+      }
+      body.innerHTML = renderJobDetailsHtml(job);
+    } catch (err) {
+      body.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message || 'Failed to load job details.')}</div>`;
+    }
+  }
+
+  function renderJobDetailsHtml(job) {
+    return `
+      <div class="mb-3">
+        <h4 class="fw-bold mb-1">${escapeHtml(job.title)}</h4>
+        <div class="text-muted mb-2">${escapeHtml(job.company_name || '')}</div>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge-type ${badgeClass(job.job_type)}">${escapeHtml(job.job_type || '')}</span>
+          ${job.location ? `<span class="badge bg-light text-secondary"><i class="bi bi-geo-alt"></i> ${escapeHtml(job.location)}</span>` : ''}
+          ${job.category ? `<span class="badge bg-light text-secondary">${escapeHtml(job.category)}</span>` : ''}
+          ${jobStatusBadge(job.status, job)}
+        </div>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+          <div class="p-3 bg-light rounded-3">
+            <div class="small text-muted">Salary</div>
+            <div class="fw-semibold text-success">${formatSalary(job.salary_min, job.salary_max)}</div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="p-3 bg-light rounded-3">
+            <div class="small text-muted">Deadline</div>
+            <div class="fw-semibold">${job.deadline ? new Date(job.deadline).toLocaleDateString() : 'Open'}</div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="p-3 bg-light rounded-3">
+            <div class="small text-muted">Views</div>
+            <div class="fw-semibold">${job.views || 0}</div>
+          </div>
+        </div>
+      </div>
+      ${job.status === 'rejected' && job.rejection_reason
+        ? `<div class="alert alert-danger"><strong>Rejection reason:</strong> ${escapeHtml(job.rejection_reason)}</div>`
+        : ''}
+      <h6 class="fw-bold">Job Description</h6>
+      <p class="text-muted" style="white-space:pre-line">${escapeHtml(job.description || 'No description.')}</p>
+      ${job.requirements
+        ? `<h6 class="fw-bold mt-3">Requirements</h6><p class="text-muted" style="white-space:pre-line">${escapeHtml(job.requirements)}</p>`
+        : ''}
+      <div class="small text-muted mt-3">Posted: ${job.created_at ? new Date(job.created_at).toLocaleString() : '—'}</div>
+    `;
   }
   // ── Analytics ────────────────────────────────────────────────────────────
   async function loadAnalytics() {
@@ -348,18 +847,18 @@
         type: 'line',
         data: {
           labels: data.viewsPerDay.map(r => r.date),
-          datasets: [{ label: 'Views', data: data.viewsPerDay.map(r => r.views), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.4 }]
+          datasets: [{ label: 'Views', data: data.viewsPerDay.map(r => r.views), borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.4 }]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { responsive: true, scales: { y: { beginAtZero: true, grid: { color: '#E2E8F0' } }, x: { grid: { display: false } } } }
       });
       if (appsChart) appsChart.destroy();
       appsChart = new Chart(document.getElementById('appsChart'), {
         type: 'line',
         data: {
           labels: data.appsPerDay.map(r => r.date),
-          datasets: [{ label: 'Applications', data: data.appsPerDay.map(r => r.applications), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', fill: true, tension: 0.4 }]
+          datasets: [{ label: 'Applications', data: data.appsPerDay.map(r => r.applications), borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.1)', fill: true, tension: 0.4 }]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { responsive: true, scales: { y: { beginAtZero: true, grid: { color: '#E2E8F0' } }, x: { grid: { display: false } } } }
       });
       document.getElementById('mostAppliedTable').innerHTML = data.mostApplied.map((j, i) => `
         <tr>
@@ -387,6 +886,9 @@
     document.getElementById(containerId).innerHTML = html;
   }
   // Init
+  rejectModal = new bootstrap.Modal(document.getElementById('rejectCompanyModal'));
+  rejectJobModal = new bootstrap.Modal(document.getElementById('rejectJobModal'));
+  jobDetailsModal = new bootstrap.Modal(document.getElementById('jobDetailsModal'));
   loadDashboard();
 </script>
 </body>

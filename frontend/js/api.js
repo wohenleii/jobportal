@@ -25,6 +25,7 @@ const api = {
   clearAuth() {
     localStorage.removeItem('jp_token');
     localStorage.removeItem('jp_user');
+    localStorage.removeItem('jp_employer_profile');
   },
 
   /** Check if user is logged in */
@@ -201,8 +202,17 @@ const api = {
     return this.get(`/admin/jobs?${qs}`);
   },
 
-  async updateJobStatus(id, status) {
-    return this.put(`/admin/jobs/${id}/status`, { status });
+  async updateJobStatus(id, status, rejection_reason = '') {
+    return this.put(`/admin/jobs/${id}/status`, { status, rejection_reason });
+  },
+
+  async getAdminEmployers(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.get(`/admin/employers?${qs}`);
+  },
+
+  async updateEmployerStatus(id, status, rejection_reason = '') {
+    return this.put(`/admin/employers/${id}/status`, { status, rejection_reason });
   },
 
   async getAnalytics() {
@@ -242,6 +252,29 @@ function formatSalary(min, max) {
   return `Up to ${fmt(max)}/mo`;
 }
 
+function companyInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function firstNameFromFull(name) {
+  const first = String(name || '').trim().split(/\s+/)[0];
+  return first || 'there';
+}
+
+function formatJobTypeLabel(type) {
+  const map = {
+    'full-time': 'Full-time',
+    'part-time': 'Part-time',
+    'short-term': 'Short-term',
+    contract: 'Contract',
+    remote: 'Remote',
+  };
+  return map[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : '—');
+}
+
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = Math.floor(diff / 86400000);
@@ -268,15 +301,21 @@ function updateNavAuth() {
   const navAuth = document.getElementById('navAuth');
   if (!navAuth) return;
 
+  document.body.classList.toggle('is-student', !!(user && user.role === 'student'));
+
   if (user) {
+    const safeName = String(user.name || 'Account').replace(/</g, '&lt;');
     navAuth.innerHTML = `
       <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle fw-semibold" href="#" data-bs-toggle="dropdown">
-          👤 ${user.name}
+        <a class="nav-link dropdown-toggle fw-semibold" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person-circle me-1" aria-hidden="true"></i>${safeName}
         </a>
-        <ul class="dropdown-menu dropdown-menu-end">
+        <ul class="dropdown-menu dropdown-menu-end shadow">
           <li><a class="dropdown-item" href="/profile.html"><i class="bi bi-person me-2"></i>My Profile</a></li>
+          ${user.role === 'student' ? `
+          <li><a class="dropdown-item" href="/profile.html" onclick="localStorage.setItem('profileTab','applications')"><i class="bi bi-file-earmark-text me-2"></i>My Applications</a></li>
           <li><a class="dropdown-item" href="/profile.html#bookmarks" onclick="localStorage.setItem('profileTab','bookmarks')"><i class="bi bi-bookmark me-2"></i>Saved Jobs</a></li>
+          ` : ''}
           ${user.role === 'admin' ? '<li><a class="dropdown-item" href="/admin.html"><i class="bi bi-shield-lock me-2"></i>Admin Dashboard</a></li>' : ''}
           ${user.role === 'employer' ? '<li><a class="dropdown-item" href="/employer.html"><i class="bi bi-briefcase me-2"></i>Employer Dashboard</a></li><li><a class="dropdown-item" href="/post-job.html"><i class="bi bi-plus-circle me-2"></i>Post a Job</a></li>' : ''}
           <li><hr class="dropdown-divider"></li>
@@ -287,7 +326,7 @@ function updateNavAuth() {
   } else {
     navAuth.innerHTML = `
       <li class="nav-item"><a class="nav-link" href="/login.html">Login</a></li>
-      <li class="nav-item"><a class="btn btn-primary ms-2" href="/register.html">Sign Up</a></li>
+      <li class="nav-item"><a class="btn btn-primary ms-lg-2" href="/register.html">Sign Up</a></li>
     `;
   }
 }

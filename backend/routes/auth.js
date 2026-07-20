@@ -33,11 +33,12 @@ router.post('/register', async (req, res) => {
       [name, email, hashedPassword, userRole]
     );
 
-    // If employer, create employer profile
+    // If employer, create employer profile (pending admin verification)
     if (userRole === 'employer') {
       const { company_name = 'My Company', industry = '', location = '' } = req.body;
       await db.query(
-        'INSERT INTO employers (user_id, company_name, industry, location) VALUES (?, ?, ?, ?)',
+        `INSERT INTO employers (user_id, company_name, industry, location, verification_status)
+         VALUES (?, ?, ?, ?, 'pending')`,
         [result.insertId, company_name, industry, location]
       );
     }

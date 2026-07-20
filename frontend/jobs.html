@@ -11,21 +11,21 @@
     .smart-search-wrap { position: relative; }
     .smart-search-wrap .ai-badge {
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+      background: #0a0a0a;
       color: #fff; font-size: .65rem; font-weight: 700;
-      padding: 2px 6px; border-radius: 6px; pointer-events: none; letter-spacing:.5px;
+      padding: 2px 6px; border-radius: 4px; pointer-events: none; letter-spacing:.5px;
     }
     .smart-search-wrap input { padding-left: 52px !important; }
     .stat-item .number { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-    .stat-item .label  { font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing:.5px; }
+    .stat-item .label  { font-size: .75rem; color: #737373; text-transform: uppercase; letter-spacing:.5px; }
     .filter-section-title {
       font-size: .7rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .6px; color: #94a3b8; margin-bottom: 8px; margin-top: 16px;
+      letter-spacing: .6px; color: #737373; margin-bottom: 8px; margin-top: 16px;
     }
     .salary-pills { display: flex; flex-wrap: wrap; gap: 4px; }
     .salary-pill {
-      font-size: .72rem; padding: 3px 9px; border-radius: 20px;
-      border: 1px solid #e2e8f0; cursor: pointer; background: #f8fafc;
+      font-size: .72rem; padding: 3px 9px; border-radius: 4px;
+      border: 1px solid #e5e5e5; cursor: pointer; background: #fafafa;
       transition: all .15s; white-space: nowrap;
     }
     .salary-pill:hover, .salary-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
@@ -35,10 +35,10 @@
     .job-card-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .job-card-meta .job-title-wrap { flex: 1; min-width: 0; }
     .job-card-meta .job-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; padding-right: 32px; }
-    .bookmark-btn { position: absolute; top: 16px; right: 14px; background: none; border: none; color: #94a3b8; font-size: 1.15rem; cursor: pointer; transition: color .2s; line-height: 1; padding: 2px; }
-    .bookmark-btn.active, .bookmark-btn:hover { color: #f59e0b; }
-    .ai-reason { font-size: .72rem; color: #6366f1; background: #eef2ff; border-radius: 8px; padding: 4px 10px; margin-top: 6px; display: inline-block; }
-    #smartBanner { background: linear-gradient(135deg,#eef2ff,#f5f3ff); border: 1px solid #c7d2fe; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: none; }
+    .bookmark-btn { position: absolute; top: 16px; right: 14px; background: none; border: none; color: #a3a3a3; font-size: 1.15rem; cursor: pointer; transition: color .2s; line-height: 1; padding: 2px; }
+    .bookmark-btn.active, .bookmark-btn:hover { color: #0a0a0a; }
+    .ai-reason { font-size: .72rem; color: #404040; background: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 4px; padding: 4px 10px; margin-top: 6px; display: inline-block; }
+    #smartBanner { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: none; }
     #smartBanner.show { display: flex; align-items: center; gap: 8px; }
     .results-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     @media (max-width: 576px) { .job-card-meta { flex-wrap: wrap; } .job-card-meta .job-right { padding-right: 36px; } }
@@ -46,7 +46,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
   <div class="container">
     <a class="navbar-brand" href="/index.html">Job<span>Portal</span></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
@@ -55,14 +55,16 @@
     <div class="collapse navbar-collapse" id="navMenu">
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
-        <li class="nav-item"><a class="nav-link active" href="/jobs.html">Browse Jobs</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/jobs.html" aria-current="page">Browse Jobs</a></li>
+        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html" onclick="localStorage.setItem('profileTab','applications')">My Applications</a></li>
+        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html#bookmarks" onclick="localStorage.setItem('profileTab','bookmarks')">Saved Jobs</a></li>
       </ul>
       <ul class="navbar-nav align-items-center" id="navAuth"></ul>
     </div>
   </div>
 </nav>
 
-<div class="bg-primary text-white py-4">
+<div class="page-hero">
   <div class="container">
     <h1 class="fw-bold mb-1">Browse Jobs</h1>
     <p class="opacity-75 small mb-3">Describe your interests or search by keyword — our smart search finds the best matches.</p>
@@ -71,7 +73,7 @@
         <span class="ai-badge">AI</span>
         <input type="text" class="form-control" id="searchInput" placeholder='e.g. "I enjoy video editing" or search job title...' />
       </div>
-      <button class="btn btn-warning fw-bold px-4" onclick="handleSearch()">
+      <button class="btn btn-light fw-bold px-4" onclick="handleSearch()">
         <i class="bi bi-search me-1"></i>Search
       </button>
     </div>
@@ -506,12 +508,14 @@ async function toggleBookmark(e, jobId, btn) {
 // ── Init — runs after ALL functions are defined ────────
 (async function init() {
   await Promise.all([loadCompanies(), loadStats()]);
-  loadJobs();
-  if (urlParams.get('id')) openJobModal(urlParams.get('id'));
-  // Pre-select category from URL param
   if (urlParams.get('category')) {
     document.getElementById('categoryFilter').value = urlParams.get('category');
   }
+  if (urlParams.get('location')) {
+    document.getElementById('locationFilter').value = urlParams.get('location');
+  }
+  loadJobs();
+  if (urlParams.get('id')) openJobModal(urlParams.get('id'));
 })();
 </script>
 </body>

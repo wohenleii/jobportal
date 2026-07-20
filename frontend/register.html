@@ -146,7 +146,12 @@
 
     try {
       await api.register({ name, email, password, role, company_name });
-      showAlert('Account created! Redirecting...', 'success');
+      showAlert(
+        role === 'employer'
+          ? 'Account created! Your company is pending admin verification. Redirecting...'
+          : 'Account created! Redirecting...',
+        'success'
+      );
       setTimeout(() => {
         if (role === 'employer') window.location.href = '/employer.html';
         else window.location.href = '/index.html';

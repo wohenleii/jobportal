@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JobPortal — Find Your Dream Job</title>
+  <title>JobPortal — Find Your Next Opportunity</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css" />
@@ -11,18 +11,20 @@
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top" aria-label="Primary">
   <div class="container">
     <a class="navbar-brand" href="/index.html">Job<span>Portal</span></a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link active" href="/index.html">Home</a></li>
+      <ul class="navbar-nav me-auto" id="navMain">
+        <li class="nav-item"><a class="nav-link active" href="/index.html" aria-current="page">Home</a></li>
         <li class="nav-item"><a class="nav-link" href="/jobs.html">Browse Jobs</a></li>
+        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html" onclick="localStorage.setItem('profileTab','applications')">My Applications</a></li>
+        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html#bookmarks" onclick="localStorage.setItem('profileTab','bookmarks')">Saved Jobs</a></li>
       </ul>
-      <ul class="navbar-nav align-items-center" id="navAuth"></ul>
+      <ul class="navbar-nav align-items-center gap-1" id="navAuth"></ul>
     </div>
   </div>
 </nav>
@@ -30,82 +32,146 @@
 <!-- Hero -->
 <section class="hero-section">
   <div class="container">
-    <div class="row align-items-center">
+    <div class="row align-items-center g-4 g-lg-5">
       <div class="col-lg-7">
-        <h1>Find Your <span style="color:#fbbf24">Dream Job</span><br>Today</h1>
-        <p class="lead mt-3 mb-4 opacity-75">Thousands of jobs from top companies. Start your career journey now.</p>
-        <div class="search-box">
-          <i class="bi bi-search text-secondary me-2"></i>
-          <input type="text" id="heroSearch" placeholder="Job title, keyword, or company..." />
-          <button class="btn btn-warning fw-bold" onclick="heroSearch()">Search Jobs</button>
-        </div>
-        <div class="mt-3 d-flex gap-3 flex-wrap">
-          <span class="badge bg-white bg-opacity-25 text-white px-3 py-2">💻 Technology</span>
-          <span class="badge bg-white bg-opacity-25 text-white px-3 py-2">🎨 Design</span>
-          <span class="badge bg-white bg-opacity-25 text-white px-3 py-2">📊 Data Science</span>
-          <span class="badge bg-white bg-opacity-25 text-white px-3 py-2">📣 Marketing</span>
+        <div id="heroWelcome" class="hero-welcome d-none" aria-live="polite"></div>
+        <h1 id="heroTitle">Find the right opportunity for your future</h1>
+        <p class="hero-lead" id="heroLead">Search internships, graduate roles, and entry-level jobs from verified employers.</p>
+
+        <form class="hero-search-form" id="heroSearchForm" role="search" aria-label="Job search">
+          <label class="field" for="heroSearch">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" id="heroSearch" name="search" placeholder="Job title, skill, or company" autocomplete="off" />
+          </label>
+          <label class="field" for="heroLocation">
+            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+            <select id="heroLocation" name="location" aria-label="Location">
+              <option value="">Any location</option>
+              <option value="north">North</option>
+              <option value="south">South</option>
+              <option value="east">East</option>
+              <option value="west">West</option>
+              <option value="central">Central</option>
+              <option value="remote">Remote</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="islandwide">Islandwide</option>
+            </select>
+          </label>
+          <button type="submit" class="btn btn-primary">Search Jobs</button>
+        </form>
+
+        <div class="hero-chips">
+          <span class="chips-label">Popular searches:</span>
+          <a href="/jobs.html?search=Software">Software Engineering</a>
+          <a href="/jobs.html?category=Marketing">Marketing</a>
+          <a href="/jobs.html?category=Finance">Finance</a>
+          <a href="/jobs.html?category=Design">Design</a>
         </div>
       </div>
-      <div class="col-lg-5 d-none d-lg-flex justify-content-center">
-        <div style="font-size:10rem;opacity:0.15">💼</div>
+
+      <div class="col-lg-5">
+        <div class="hero-visual-panel" aria-hidden="true">
+          <div class="panel-title">Why JobPortal</div>
+          <div class="hero-visual-card">
+            <div class="kv"><strong>Verified employers</strong><span>Admin-reviewed</span></div>
+          </div>
+          <div class="hero-visual-card">
+            <div class="kv"><strong>Student-friendly roles</strong><span>Intern &amp; entry-level</span></div>
+          </div>
+          <div class="hero-visual-card">
+            <div class="kv"><strong>Track applications</strong><span>Save &amp; apply</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Stats Bar -->
-<div class="stats-bar">
+<!-- Stats / student summary -->
+<section class="stats-bar" aria-label="Summary statistics">
   <div class="container">
-    <div class="row text-center">
-      <div class="col-3 stat-item">
-        <div class="number" id="statJobs">—</div>
-        <div class="label">Active Jobs</div>
+    <div class="stats-grid" id="summaryStats" aria-live="polite">
+      <div class="home-stat-card" aria-hidden="true">
+        <div class="icon skeleton-block skeleton-avatar"></div>
+        <div class="flex-grow-1">
+          <div class="skeleton-block skeleton-line w-50"></div>
+          <div class="skeleton-block skeleton-line w-30 h-28"></div>
+        </div>
       </div>
-      <div class="col-3 stat-item">
-        <div class="number" id="statCompanies">—</div>
-        <div class="label">Companies</div>
+      <div class="home-stat-card" aria-hidden="true">
+        <div class="icon skeleton-block skeleton-avatar"></div>
+        <div class="flex-grow-1">
+          <div class="skeleton-block skeleton-line w-50"></div>
+          <div class="skeleton-block skeleton-line w-30 h-28"></div>
+        </div>
       </div>
-      <div class="col-3 stat-item">
-        <div class="number" id="statUsers">—</div>
-        <div class="label">Job Seekers</div>
+      <div class="home-stat-card" aria-hidden="true">
+        <div class="icon skeleton-block skeleton-avatar"></div>
+        <div class="flex-grow-1">
+          <div class="skeleton-block skeleton-line w-50"></div>
+          <div class="skeleton-block skeleton-line w-30 h-28"></div>
+        </div>
       </div>
-      <div class="col-3 stat-item">
-        <div class="number" id="statApps">—</div>
-        <div class="label">Applications</div>
+      <div class="home-stat-card" aria-hidden="true">
+        <div class="icon skeleton-block skeleton-avatar"></div>
+        <div class="flex-grow-1">
+          <div class="skeleton-block skeleton-line w-50"></div>
+          <div class="skeleton-block skeleton-line w-30 h-28"></div>
+        </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- Featured Jobs -->
+<!-- Latest Jobs -->
 <section class="py-5">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold mb-0">Featured Jobs</h2>
-      <a href="/jobs.html" class="btn btn-outline-primary">View All Jobs →</a>
+    <div class="section-heading">
+      <div>
+        <h2 id="jobsSectionTitle">Latest Jobs</h2>
+        <p id="jobsSectionSub">Fresh openings from verified employers.</p>
+      </div>
+      <a href="/jobs.html" class="btn btn-outline-primary">View all jobs</a>
     </div>
-    <div id="featuredJobs" class="row g-3">
+    <div id="featuredJobs" class="row g-3 g-lg-4" aria-live="polite">
       <div class="col-12 text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading jobs</span></div>
       </div>
     </div>
   </div>
 </section>
 
-
-
-<!-- CTA -->
-<section class="py-5" style="background: linear-gradient(135deg,#1e3a8a,#2563eb); color:white">
-  <div class="container text-center">
-    <h2 class="fw-bold mb-3">Ready to Post a Job?</h2>
-    <p class="lead opacity-75 mb-4">Reach thousands of qualified candidates. Post your job opening today.</p>
-    <a href="#" onclick="handlePostJob()" class="btn btn-warning btn-lg fw-bold px-5">Post a Job Free</a>
+<!-- Student CTA -->
+<section class="pb-5">
+  <div class="container">
+    <div class="student-cta d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3" id="careerCta">
+      <div>
+        <h2>Stand out to employers</h2>
+        <p>Complete your profile and keep your resume updated so recruiters can find you faster.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/profile.html" class="btn btn-primary" id="ctaPrimary">Complete Profile</a>
+        <a href="/jobs.html" class="btn btn-outline-primary">Browse Jobs</a>
+      </div>
+    </div>
   </div>
 </section>
 
-<footer class="bg-dark text-white py-4 mt-auto">
-  <div class="container text-center">
-    <p class="mb-0 opacity-50">© 2026 JobPortal. All rights reserved.</p>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-brand">Job<span>Portal</span></div>
+    <p class="footer-tagline">Find internships and entry-level roles from verified employers.</p>
+    <ul class="footer-links">
+      <li><a href="/jobs.html">Browse Jobs</a></li>
+      <li><a href="/profile.html">My Profile</a></li>
+      <li><a href="/login.html">Login</a></li>
+      <li><a href="/register.html">Sign Up</a></li>
+      <li><a href="/register.html?role=employer">Employer Portal</a></li>
+    </ul>
+    <div class="footer-meta">
+      <span>© 2026 JobPortal. All rights reserved.</span>
+      <a href="/register.html?role=employer">Are you hiring? Post a job.</a>
+    </div>
   </div>
 </footer>
 
@@ -114,76 +180,334 @@
 <script>
   updateNavAuth();
 
-  function handlePostJob() {
-    const u = api.getUser();
-    if (u && u.role === 'employer') {
-      window.location.href = '/employer.html';
-    } else if (u && u.role !== 'employer') {
-      alert('Only employer accounts can post jobs. Please login as an employer.');
+  const currentUser = api.getUser();
+  let appliedJobIds = new Set();
+  let bookmarkedJobIds = new Set();
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function personalizeHero() {
+    const welcome = document.getElementById('heroWelcome');
+    const title = document.getElementById('heroTitle');
+    const lead = document.getElementById('heroLead');
+    if (currentUser && currentUser.role === 'student') {
+      const first = firstNameFromFull(currentUser.name);
+      welcome.textContent = `Welcome back, ${first}`;
+      welcome.classList.remove('d-none');
+      title.textContent = 'Find your next opportunity';
+      lead.textContent = 'Browse roles matched to your career stage, then apply or save jobs to revisit later.';
     } else {
-      window.location.href = '/register.html?role=employer';
+      welcome.classList.add('d-none');
+      title.innerHTML = 'Find the right opportunity for your <span class="accent">future</span>';
+      lead.textContent = 'Search internships, graduate roles, and entry-level jobs from verified employers.';
     }
   }
 
-  function heroSearch() {
+  function heroSearch(e) {
+    if (e) e.preventDefault();
     const q = document.getElementById('heroSearch').value.trim();
-    if (q) window.location.href = `/jobs.html?search=${encodeURIComponent(q)}`;
-    else window.location.href = '/jobs.html';
+    const location = document.getElementById('heroLocation').value;
+    const params = new URLSearchParams();
+    if (q) params.set('search', q);
+    if (location) params.set('location', location);
+    const qs = params.toString();
+    window.location.href = qs ? `/jobs.html?${qs}` : '/jobs.html';
   }
 
-  document.getElementById('heroSearch').addEventListener('keydown', e => {
-    if (e.key === 'Enter') heroSearch();
-  });
+  document.getElementById('heroSearchForm').addEventListener('submit', heroSearch);
 
-  async function loadFeaturedJobs() {
-    try {
-      const data = await api.getJobs({ limit: 6 });
-      const container = document.getElementById('featuredJobs');
-      if (!data.jobs.length) {
-        container.innerHTML = '<div class="col-12 text-center text-muted py-4">No jobs available yet.</div>';
-        return;
-      }
-      container.innerHTML = data.jobs.map(job => `
-        <div class="col-md-6 col-lg-4">
-          <div class="job-card h-100">
-            <div class="d-flex align-items-start gap-3 mb-3">
-              <div class="company-logo-placeholder">${job.company_name.charAt(0)}</div>
-              <div class="flex-grow-1">
-                <a href="/jobs.html?id=${job.id}" class="job-title d-block">${job.title}</a>
-                <div class="company-name">${job.company_name}</div>
-              </div>
-            </div>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-              <span class="badge-type ${badgeClass(job.job_type)}">${job.job_type}</span>
-              <span class="badge bg-light text-secondary"><i class="bi bi-geo-alt"></i> ${job.location}</span>
-            </div>
-            <div class="text-muted small mb-3">${formatSalary(job.salary_min, job.salary_max)}</div>
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="text-muted small">${timeAgo(job.created_at)}</span>
-              <a href="/jobs.html?id=${job.id}" class="btn btn-sm btn-outline-primary">View Job</a>
+  function renderPlatformStats(stats) {
+    const cards = [
+      { icon: 'bi-briefcase-fill', label: 'Active Jobs', value: stats.activeJobs ?? 0, hint: 'Open roles right now', href: '/jobs.html' },
+      { icon: 'bi-building', label: 'Companies Hiring', value: stats.totalEmployers ?? 0, hint: 'With live openings', href: '/jobs.html' },
+      { icon: 'bi-lightning-charge-fill', label: 'Short-term Roles', value: stats.shortTermJobs ?? 0, hint: 'Programmes & stints', href: '/jobs.html' },
+      { icon: 'bi-clock-history', label: 'Part-time Jobs', value: stats.partTimeJobs ?? 0, hint: 'Flexible schedules', href: '/jobs.html' },
+    ];
+    document.getElementById('summaryStats').innerHTML = cards.map(c => `
+      <a class="home-stat-card" href="${c.href}">
+        <div class="icon" aria-hidden="true"><i class="bi ${c.icon}"></i></div>
+        <div>
+          <div class="label">${c.label}</div>
+          <div class="value">${c.value}</div>
+          <div class="hint">${c.hint}</div>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  function renderStudentStats({ apps, interviews, saved, profilePct }) {
+    const cards = [
+      { icon: 'bi-file-earmark-check-fill', label: 'Applications Submitted', value: apps, hint: 'Across all employers', href: '/profile.html' },
+      { icon: 'bi-calendar-check-fill', label: 'Interviews Scheduled', value: interviews, hint: 'Shortlisted applications', href: '/profile.html' },
+      { icon: 'bi-bookmark-fill', label: 'Saved Jobs', value: saved, hint: 'Jobs you bookmarked', href: '/profile.html#bookmarks', onClick: "localStorage.setItem('profileTab','bookmarks')" },
+      { icon: 'bi-person-check-fill', label: 'Profile Completion', value: `${profilePct}%`, hint: 'Keep your profile updated', href: '/profile.html' },
+    ];
+    document.getElementById('summaryStats').innerHTML = cards.map(c => `
+      <a class="home-stat-card" href="${c.href}" ${c.onClick ? `onclick="${c.onClick}"` : ''}>
+        <div class="icon" aria-hidden="true"><i class="bi ${c.icon}"></i></div>
+        <div>
+          <div class="label">${c.label}</div>
+          <div class="value">${c.value}</div>
+          <div class="hint">${c.hint}</div>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  function profileCompletion(user) {
+    if (!user) return 0;
+    const fields = [user.name, user.bio, user.skills, user.resume_url];
+    const filled = fields.filter(v => v && String(v).trim()).length;
+    return Math.round((filled / fields.length) * 100);
+  }
+
+  function workplaceLabel(location) {
+    const loc = String(location || '').toLowerCase();
+    if (loc.includes('remote')) return 'Remote';
+    if (loc.includes('hybrid')) return 'Hybrid';
+    return location ? 'On-site' : null;
+  }
+
+  function isJobExpired(job) {
+    if (!job.deadline) return false;
+    const d = new Date(job.deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
+  }
+
+  function salaryDisplay(job) {
+    if (!job.salary_min && !job.salary_max) return '';
+    return `<div class="salary-text">${esc(formatSalary(job.salary_min, job.salary_max))}</div>`;
+  }
+
+  function jobCardHtml(job) {
+    const applied = appliedJobIds.has(job.id);
+    const saved = bookmarkedJobIds.has(job.id);
+    const expired = isJobExpired(job);
+    const workplace = workplaceLabel(job.location);
+    const initials = companyInitials(job.company_name);
+    let primaryAction;
+    if (applied) {
+      primaryAction = `<span class="badge-applied" aria-label="Already applied"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Applied</span>`;
+    } else if (expired) {
+      primaryAction = `<span class="badge-closed" aria-label="Applications closed">Applications Closed</span>`;
+    } else {
+      primaryAction = `<a href="/jobs.html?id=${job.id}" class="btn btn-sm btn-primary">Apply Now</a>`;
+    }
+
+    return `
+      <div class="col-md-6 col-lg-4">
+        <article class="job-card">
+          ${currentUser && currentUser.role === 'student' ? `
+          <button type="button" class="bookmark-btn ${saved ? 'active' : ''}"
+            aria-label="${saved ? 'Remove saved job' : 'Save job'}: ${esc(job.title)}"
+            aria-pressed="${saved ? 'true' : 'false'}"
+            onclick="toggleHomeBookmark(${job.id}, this)">
+            <i class="bi ${saved ? 'bi-bookmark-fill' : 'bi-bookmark'}" aria-hidden="true"></i>
+          </button>` : ''}
+          <div class="d-flex align-items-start gap-3 mb-2 pe-5">
+            <div class="company-logo-placeholder" aria-hidden="true">${esc(initials)}</div>
+            <div class="flex-grow-1 min-w-0">
+              <a href="/jobs.html?id=${job.id}" class="job-title d-block">${esc(job.title)}</a>
+              <div class="company-name">${esc(job.company_name)}</div>
             </div>
           </div>
+          <div class="job-meta">
+            <span class="badge-type ${badgeClass(job.job_type)}">${esc(formatJobTypeLabel(job.job_type))}</span>
+            ${job.location ? `<span class="badge bg-light text-secondary"><i class="bi bi-geo-alt" aria-hidden="true"></i> ${esc(job.location)}</span>` : ''}
+            ${workplace ? `<span class="badge bg-light text-secondary">${esc(workplace)}</span>` : ''}
+          </div>
+          ${salaryDisplay(job)}
+          <div class="job-card-footer">
+            <span class="text-muted small">
+              Posted ${esc(timeAgo(job.created_at))}
+              ${job.deadline ? ` · Deadline ${esc(new Date(job.deadline).toLocaleDateString())}` : ''}
+            </span>
+            <div class="job-card-actions">
+              <a href="/jobs.html?id=${job.id}" class="btn btn-sm btn-outline-primary">View Details</a>
+              ${primaryAction}
+            </div>
+          </div>
+        </article>
+      </div>`;
+  }
+
+  function renderJobSkeletons() {
+    document.getElementById('featuredJobs').innerHTML = Array.from({ length: 6 }).map(() => `
+      <div class="col-md-6 col-lg-4">
+        <div class="job-card">
+          <div class="d-flex gap-3 mb-3">
+            <div class="skeleton-block skeleton-avatar"></div>
+            <div class="flex-grow-1">
+              <div class="skeleton-block skeleton-line h-18 w-70"></div>
+              <div class="skeleton-block skeleton-line w-40"></div>
+            </div>
+          </div>
+          <div class="skeleton-block skeleton-line h-24 w-50"></div>
+          <div class="skeleton-block skeleton-line w-35"></div>
         </div>
-      `).join('');
+      </div>`).join('');
+  }
+
+  async function loadFeaturedJobs() {
+    renderJobSkeletons();
+    try {
+      const data = await api.getJobs({ limit: 6, sort: 'newest' });
+      const container = document.getElementById('featuredJobs');
+      if (!data.jobs || !data.jobs.length) {
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true"><i class="bi bi-briefcase"></i></div>
+              <h6>No matching jobs are available right now.</h6>
+              <p>Try adjusting your search or check back soon.</p>
+              <a href="/jobs.html" class="btn btn-primary">Browse Jobs</a>
+            </div>
+          </div>`;
+        return;
+      }
+      container.innerHTML = data.jobs.map(jobCardHtml).join('');
     } catch (err) {
-      document.getElementById('featuredJobs').innerHTML =
-        '<div class="col-12 text-center text-danger py-4">Failed to load jobs. Make sure the server is running.</div>';
+      console.warn('Featured jobs error:', err.message);
+      document.getElementById('featuredJobs').innerHTML = `
+        <div class="col-12">
+          <div class="dash-error">
+            <div class="fw-semibold mb-1">Failed to load jobs</div>
+            <div class="small mb-3">Please try again. Make sure the server is running.</div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="loadFeaturedJobs()">Retry</button>
+          </div>
+        </div>`;
     }
   }
 
-  async function loadStats() {
+  async function toggleHomeBookmark(jobId, btn) {
+    if (!api.isLoggedIn() || currentUser?.role !== 'student') {
+      window.location.href = '/login.html';
+      return;
+    }
+    const icon = btn.querySelector('i');
+    const wasSaved = bookmarkedJobIds.has(jobId);
     try {
-      const data = await api.getPublicStats();
-      document.getElementById('statJobs').textContent = data.stats.activeJobs;
-      document.getElementById('statCompanies').textContent = data.stats.totalEmployers;
-      document.getElementById('statUsers').textContent = data.stats.totalUsers;
-      document.getElementById('statApps').textContent = data.stats.totalApplications;
-    } catch (_) {}
+      if (wasSaved) {
+        await api.removeBookmark(jobId);
+        bookmarkedJobIds.delete(jobId);
+        icon.className = 'bi bi-bookmark';
+        btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
+        showToast('Removed from saved jobs', 'success');
+      } else {
+        await api.addBookmark(jobId);
+        bookmarkedJobIds.add(jobId);
+        icon.className = 'bi bi-bookmark-fill';
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+        showToast('Job saved', 'success');
+      }
+      if (currentUser?.role === 'student') refreshStudentStatsOnly();
+    } catch (err) {
+      showToast(err.message || 'Could not update saved job', 'danger');
+    }
   }
 
+  async function refreshStudentStatsOnly() {
+    try {
+      const [appsData, bookmarksData, meData] = await Promise.all([
+        api.getMyApplications(),
+        api.getBookmarks(),
+        api.getMe(),
+      ]);
+      const apps = appsData.applications || [];
+      const bookmarks = bookmarksData.bookmarks || [];
+      const user = meData.user || currentUser;
+      renderStudentStats({
+        apps: apps.length,
+        interviews: apps.filter(a => a.status === 'shortlisted').length,
+        saved: bookmarks.length,
+        profilePct: profileCompletion(user),
+      });
+    } catch (_) { /* keep previous stats */ }
+  }
 
-  loadFeaturedJobs();
-  loadStats();
+  async function loadSummary() {
+    if (currentUser && currentUser.role === 'student') {
+      try {
+        const [appsData, bookmarksData, meData] = await Promise.all([
+          api.getMyApplications(),
+          api.getBookmarks(),
+          api.getMe(),
+        ]);
+        const apps = appsData.applications || [];
+        const bookmarks = bookmarksData.bookmarks || [];
+        const user = meData.user || currentUser;
+        appliedJobIds = new Set(apps.map(a => a.job_id));
+        bookmarkedJobIds = new Set(bookmarks.map(b => b.id));
+        renderStudentStats({
+          apps: apps.length,
+          interviews: apps.filter(a => a.status === 'shortlisted').length,
+          saved: bookmarks.length,
+          profilePct: profileCompletion(user),
+        });
+
+        const ctaPrimary = document.getElementById('ctaPrimary');
+        if (currentUser.role === 'student' && profileCompletion(user) >= 100) {
+          ctaPrimary.textContent = 'Track Applications';
+          ctaPrimary.href = '/profile.html';
+          document.querySelector('#careerCta h2').textContent = 'Keep your applications moving';
+          document.querySelector('#careerCta p').textContent = 'Review application status and update your profile when you gain new skills.';
+        } else if (currentUser.role === 'student') {
+          ctaPrimary.textContent = 'Complete Profile';
+          ctaPrimary.href = '/profile.html';
+        }
+      } catch (err) {
+        console.warn('Student summary error:', err.message);
+        try {
+          const data = await api.getPublicStats();
+          renderPlatformStats(data.stats || {});
+        } catch (_) {
+          document.getElementById('summaryStats').innerHTML = '';
+        }
+      }
+    } else {
+      try {
+        const data = await api.getPublicStats();
+        renderPlatformStats(data.stats || {});
+      } catch (_) {
+        document.getElementById('summaryStats').innerHTML =
+          '<div class="dash-error full-span">Could not load platform statistics.</div>';
+      }
+    }
+  }
+
+  function setupCareerCta() {
+    const cta = document.getElementById('careerCta');
+    const primary = document.getElementById('ctaPrimary');
+    const title = cta.querySelector('h2');
+    const copy = cta.querySelector('p');
+    if (!currentUser) {
+      title.textContent = 'Start your career search';
+      copy.textContent = 'Create a free student account to apply for jobs, save roles, and track your applications.';
+      primary.textContent = 'Create Account';
+      primary.href = '/register.html?role=student';
+      return;
+    }
+    if (currentUser.role !== 'student') {
+      title.textContent = 'Explore opportunities';
+      copy.textContent = 'Browse live openings from verified employers across Singapore.';
+      primary.textContent = 'Browse Jobs';
+      primary.href = '/jobs.html';
+    }
+  }
+
+  personalizeHero();
+  setupCareerCta();
+  loadSummary().then(() => loadFeaturedJobs());
 </script>
 </body>
 </html>
