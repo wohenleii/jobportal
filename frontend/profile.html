@@ -69,9 +69,19 @@
             <input type="text" class="form-control" id="editSkills" placeholder="React, Node.js, Python..." required />
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Resume URL <span class="text-danger">*</span></label>
-            <input type="url" class="form-control" id="editResume" placeholder="https://..." required />
-            <div class="form-text">Add a public link to your resume (Google Drive, LinkedIn, personal site, etc.).</div>
+            <label class="form-label small fw-semibold">Resume <span class="text-danger">*</span></label>
+            <input type="url" class="form-control mb-2" id="editResume" placeholder="https://drive.google.com/..." />
+            <div class="form-text mb-2">Paste a public resume link, or upload a PDF below (either works).</div>
+            <div class="input-group">
+              <input type="file" class="form-control" id="resumeFile" accept="application/pdf,.pdf" />
+              <button type="button" class="btn btn-outline-primary" id="uploadResumeBtn">Upload PDF</button>
+            </div>
+            <div class="form-text" id="resumeStatus">No resume on file yet.</div>
+          </div>
+          <div class="mb-3 student-only-fields">
+            <label class="form-label small fw-semibold">Fields of interest <span class="text-muted">(job alerts)</span></label>
+            <div class="form-text mb-2">Select fields you care about. You will get a notification when a matching job is posted and approved.</div>
+            <div id="interestFields" class="interest-grid"></div>
           </div>
           <button type="submit" class="btn btn-primary w-100 fw-bold">Save Changes</button>
         </form>
@@ -175,12 +185,18 @@
       const { job } = await api.getJob(jobId);
       const alreadyApplied = !!options.alreadyApplied;
       const appStatus = options.appStatus || '';
+      const jobRemoved = job.status === 'closed' || options.jobRemoved;
       const initials = companyInitials(job.company_name);
       const salaryText = (job.salary_min || job.salary_max)
         ? formatSalary(job.salary_min, job.salary_max)
         : 'Not specified';
 
       body.innerHTML = `
+        ${jobRemoved ? `
+          <div class="alert alert-secondary mb-4" role="status">
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+            <strong>This job has been removed.</strong> Applications are closed (deadline passed or listing closed).
+          </div>` : ''}
         <div class="d-flex align-items-start gap-3 mb-4">
           <div class="company-logo-placeholder" aria-hidden="true">${esc(initials)}</div>
           <div>
@@ -191,6 +207,7 @@
               ${job.location ? `<span class="badge bg-light text-secondary"><i class="bi bi-geo-alt" aria-hidden="true"></i> ${esc(job.location)}</span>` : ''}
               ${job.category ? `<span class="badge bg-light text-secondary">${esc(job.category)}</span>` : ''}
               ${alreadyApplied ? `<span class="badge bg-success">Applied${appStatus ? ` · ${esc(appStatus)}` : ''}</span>` : ''}
+              ${jobRemoved ? '<span class="badge bg-secondary">Removed</span>' : ''}
             </div>
           </div>
         </div>
@@ -216,10 +233,12 @@
         <h6 class="fw-bold mt-3">About ${esc(job.company_name || 'the company')}</h6>
         <p class="text-muted">${esc(job.company_description || 'No company overview available.')}</p>
         <div class="d-flex flex-wrap gap-2 mt-4">
-          ${alreadyApplied
-            ? '<span class="badge-applied"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Already applied</span>'
-            : `<a href="/jobs.html?id=${job.id}" class="btn btn-primary">View &amp; Apply</a>`}
-          <a href="/jobs.html?id=${job.id}" class="btn btn-outline-primary">Open on Browse Jobs</a>
+          ${jobRemoved
+            ? '<span class="badge bg-secondary"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Job removed — no longer accepting applications</span>'
+            : alreadyApplied
+              ? '<span class="badge-applied"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Already applied</span>'
+              : `<a href="/jobs.html?id=${job.id}" class="btn btn-primary">View &amp; Apply</a>`}
+          ${!jobRemoved ? `<a href="/jobs.html?id=${job.id}" class="btn btn-outline-primary">Open on Browse Jobs</a>` : ''}
         </div>
       `;
     } catch (err) {
@@ -238,11 +257,50 @@
       document.getElementById('editName').value = user.name || '';
       document.getElementById('editBio').value = user.bio || '';
       document.getElementById('editSkills').value = user.skills || '';
-      document.getElementById('editResume').value = user.resume_url || '';
+      document.getElementById('editResume').value =
+        user.resume_url && !String(user.resume_url).startsWith('/uploads/')
+          ? user.resume_url
+          : '';
+      updateResumeStatus(user.resume_url);
+      renderInterestFields(user.interest_fields_list || []);
+      document.querySelectorAll('.student-only-fields').forEach((el) => {
+        el.classList.toggle('d-none', user.role !== 'student');
+      });
       renderProfileCompleteBanner(user);
     } catch (err) {
       showToast('Failed to load profile', 'danger');
     }
+  }
+
+  function updateResumeStatus(resumeUrl) {
+    const el = document.getElementById('resumeStatus');
+    if (!el) return;
+    if (!resumeUrl) {
+      el.innerHTML = 'No resume on file yet.';
+      return;
+    }
+    const isUpload = String(resumeUrl).startsWith('/uploads/');
+    el.innerHTML = isUpload
+      ? `PDF uploaded — <a href="${esc(resumeUrl)}" target="_blank" rel="noopener">View resume</a>`
+      : `Link saved — <a href="${esc(resumeUrl)}" target="_blank" rel="noopener">Open resume</a>`;
+  }
+
+  function renderInterestFields(selected) {
+    const container = document.getElementById('interestFields');
+    if (!container) return;
+    const selectedSet = new Set(selected || []);
+    container.innerHTML = JOB_INTEREST_CATEGORIES.map((cat) => `
+      <label class="interest-chip">
+        <input type="checkbox" name="interest" value="${esc(cat)}" ${selectedSet.has(cat) ? 'checked' : ''} />
+        <span>${esc(cat)}</span>
+      </label>
+    `).join('');
+  }
+
+  function getSelectedInterests() {
+    return [...document.querySelectorAll('#interestFields input[name="interest"]:checked')].map(
+      (el) => el.value
+    );
   }
 
   function renderProfileCompleteBanner(user) {
@@ -270,7 +328,7 @@
         <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
         <div>
           <strong>Complete your student profile</strong>
-          <div class="mt-1">Fill in your bio, skills, and resume URL before applying so employers can review your details.</div>
+          <div class="mt-1">Fill in your bio, skills, and resume (PDF upload or link) before applying so employers can review your details.</div>
           <div class="small mt-1">Still missing: ${esc(missing)}</div>
         </div>
       </div>`;
@@ -294,16 +352,20 @@
           </div>`;
         return;
       }
-      container.innerHTML = data.applications.map(app => `
-        <article class="job-card mb-3 profile-job-card" role="button" tabindex="0"
-          onclick="openJobDetails(${app.job_id}, { alreadyApplied: true, appStatus: '${esc(app.status)}' })"
-          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openJobDetails(${app.job_id},{alreadyApplied:true,appStatus:'${esc(app.status)}'});}">
+      container.innerHTML = data.applications.map(app => {
+        const jobRemoved = app.job_status === 'closed';
+        const openOpts = `{ alreadyApplied: true, appStatus: '${esc(app.status)}', jobRemoved: ${jobRemoved} }`;
+        return `
+        <article class="job-card mb-3 profile-job-card ${jobRemoved ? 'job-removed-card' : ''}" role="button" tabindex="0"
+          onclick="openJobDetails(${app.job_id}, ${openOpts})"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openJobDetails(${app.job_id},${openOpts});}">
           <div class="d-flex justify-content-between align-items-start gap-3">
             <div>
-              <a href="#" class="job-title d-block" onclick="event.preventDefault(); openJobDetails(${app.job_id}, { alreadyApplied: true, appStatus: '${esc(app.status)}' });">${esc(app.title)}</a>
+              <a href="#" class="job-title d-block" onclick="event.preventDefault(); openJobDetails(${app.job_id}, ${openOpts});">${esc(app.title)}</a>
               <div class="text-muted small">${esc(app.company_name)} · ${esc(app.location || '')}</div>
-              <div class="mt-1">
+              <div class="mt-1 d-flex flex-wrap gap-2 align-items-center">
                 <span class="badge-type ${badgeClass(app.job_type)}">${esc(formatJobTypeLabel(app.job_type))}</span>
+                ${jobRemoved ? '<span class="badge bg-secondary">This job has been removed</span>' : ''}
               </div>
             </div>
             <div class="text-end">
@@ -311,8 +373,8 @@
               <div class="text-muted small mt-1">${timeAgo(app.applied_at)}</div>
             </div>
           </div>
-        </article>
-      `).join('');
+        </article>`;
+      }).join('');
     } catch (err) {
       document.getElementById('applicationsList').innerHTML =
         '<div class="alert alert-danger">Failed to load applications.</div>';
@@ -376,24 +438,55 @@
     btn.classList.add('active');
   }
 
+  document.getElementById('uploadResumeBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('resumeFile');
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      showToast('Choose a PDF file first.', 'warning');
+      return;
+    }
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      showToast('Only PDF files are allowed.', 'warning');
+      return;
+    }
+    try {
+      const data = await api.uploadResume(file);
+      document.getElementById('editResume').value = '';
+      updateResumeStatus(data.resume_url);
+      fileInput.value = '';
+      showToast('Resume PDF uploaded successfully!', 'success');
+      loadProfile();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  });
+
   document.getElementById('profileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const alertEl = document.getElementById('profileAlert');
     const name = document.getElementById('editName').value.trim();
     const bio = document.getElementById('editBio').value.trim();
     const skills = document.getElementById('editSkills').value.trim();
-    const resume_url = document.getElementById('editResume').value.trim();
+    let resume_url = document.getElementById('editResume').value.trim();
+    const interest_fields = getSelectedInterests();
+
+    // If URL field empty but a PDF was previously uploaded, keep it
+    if (!resume_url) {
+      try {
+        const me = await api.getMe();
+        if (me.user?.resume_url) resume_url = me.user.resume_url;
+      } catch (_) {}
+    }
 
     if (!name || !bio || !skills || !resume_url) {
       alertEl.className = 'alert alert-warning';
-      alertEl.textContent = 'Please fill in name, bio, skills, and resume URL so employers can see your details.';
+      alertEl.textContent = 'Please fill in name, bio, skills, and add a resume (PDF upload or link).';
       alertEl.classList.remove('d-none');
       return;
     }
 
     try {
-      await api.updateProfile({ name, bio, skills, resume_url });
-      // Keep local auth name in sync for nav
+      await api.updateProfile({ name, bio, skills, resume_url, interest_fields });
       const localUser = api.getUser();
       if (localUser) {
         localUser.name = name;
@@ -401,7 +494,9 @@
         updateNavAuth();
       }
       alertEl.className = 'alert alert-success';
-      alertEl.textContent = 'Profile updated successfully! You can now apply for jobs.';
+      alertEl.textContent = interest_fields.length
+        ? 'Profile updated! Job alerts are on for your selected fields.'
+        : 'Profile updated successfully! You can now apply for jobs.';
       alertEl.classList.remove('d-none');
       loadProfile();
       setTimeout(() => alertEl.classList.add('d-none'), 3000);

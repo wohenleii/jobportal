@@ -101,6 +101,80 @@
       </div>
     </div>
 
+    <!-- Applicant pipeline + closing soon -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-7">
+        <div class="stat-card h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold mb-0">Applicant Status Breakdown</h6>
+            <a href="#" class="small fw-semibold text-decoration-none" onclick="navigateTo('applicants'); return false;">View all</a>
+          </div>
+          <div id="applicantBreakdown">
+            <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="stat-card h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold mb-0">Jobs Closing Soon</h6>
+            <span class="badge bg-warning text-dark" id="closingSoonBadge">0</span>
+          </div>
+          <div id="closingSoonList">
+            <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent applicants -->
+    <div class="stat-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+        <h6 class="fw-semibold mb-0">Recent Applicants</h6>
+        <a href="#" class="small fw-semibold text-decoration-none" onclick="navigateTo('applicants'); return false;">Manage applicants</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Applicant</th>
+              <th scope="col">Job</th>
+              <th scope="col">Applied</th>
+              <th scope="col">Status</th>
+              <th scope="col">Quick action</th>
+            </tr>
+          </thead>
+          <tbody id="recentApplicantsTable">
+            <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Job performance -->
+    <div class="stat-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+        <h6 class="fw-semibold mb-0">Job Performance</h6>
+        <span class="small text-muted">Views vs applications</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Job</th>
+              <th scope="col">Views</th>
+              <th scope="col">Applications</th>
+              <th scope="col">Conversion</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="jobPerformanceTable">
+            <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Latest Jobs -->
     <div class="stat-card">
       <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
@@ -114,13 +188,14 @@
               <th scope="col">Job</th>
               <th scope="col">Type</th>
               <th scope="col">Status</th>
+              <th scope="col">Views</th>
               <th scope="col">Applicants</th>
               <th scope="col">Posted</th>
               <th scope="col"><span class="visually-hidden">Actions</span></th>
             </tr>
           </thead>
           <tbody id="latestJobsTable">
-            <tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading jobs</span></div></td></tr>
+            <tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading jobs</span></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -135,10 +210,11 @@
         <span class="text-muted small" id="jobCount"></span>
         <select class="form-select form-select-sm" id="jobStatusFilter" style="width:auto;min-width:140px" aria-label="Filter jobs by status" onchange="loadJobs()">
           <option value="all">All statuses</option>
-          <option value="active">Approved</option>
+          <option value="approved">Approved</option>
+          <option value="open">Open jobs</option>
+          <option value="past">Past jobs</option>
           <option value="pending">Pending</option>
           <option value="rejected">Rejected</option>
-          <option value="closed">Closed</option>
         </select>
       </div>
       <button class="btn btn-primary fw-semibold px-3" onclick="openPostJobModal()">
@@ -659,11 +735,21 @@
       <div class="col-md-4"><div class="skeleton-block" style="height:72px"></div></div>
       <div class="col-md-4"><div class="skeleton-block" style="height:72px"></div></div>
       <div class="col-md-4"><div class="skeleton-block" style="height:72px"></div></div>`;
+    const spin = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
+    const elBreakdown = document.getElementById('applicantBreakdown');
+    const elClosing = document.getElementById('closingSoonList');
+    const elRecent = document.getElementById('recentApplicantsTable');
+    const elPerf = document.getElementById('jobPerformanceTable');
+    if (elBreakdown) elBreakdown.innerHTML = spin;
+    if (elClosing) elClosing.innerHTML = spin;
+    if (elRecent) elRecent.innerHTML = `<tr><td colspan="5" class="text-center py-3">${spin}</td></tr>`;
+    if (elPerf) elPerf.innerHTML = `<tr><td colspan="5" class="text-center py-3">${spin}</td></tr>`;
     document.getElementById('latestJobsTable').innerHTML = Array.from({ length: 3 }).map(() => `
       <tr>
         <td><div class="skeleton-block" style="height:16px;width:70%"></div></td>
         <td><div class="skeleton-block" style="height:16px;width:60px"></div></td>
         <td><div class="skeleton-block" style="height:16px;width:70px"></div></td>
+        <td><div class="skeleton-block" style="height:16px;width:30px"></div></td>
         <td><div class="skeleton-block" style="height:16px;width:30px"></div></td>
         <td><div class="skeleton-block" style="height:16px;width:80px"></div></td>
         <td></td>
@@ -679,7 +765,166 @@
       </div>`;
     document.getElementById('statCards').innerHTML = `<div class="col-12">${html}</div>`;
     document.getElementById('approvalSummary').innerHTML = '';
-    document.getElementById('latestJobsTable').innerHTML = `<tr><td colspan="6">${html}</td></tr>`;
+    ['applicantBreakdown', 'closingSoonList'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
+    document.getElementById('recentApplicantsTable').innerHTML = `<tr><td colspan="5">${html}</td></tr>`;
+    document.getElementById('jobPerformanceTable').innerHTML = `<tr><td colspan="5"></td></tr>`;
+    document.getElementById('latestJobsTable').innerHTML = `<tr><td colspan="7">${html}</td></tr>`;
+  }
+
+  function conversionRate(views, apps) {
+    const v = Number(views) || 0;
+    const a = Number(apps) || 0;
+    if (v <= 0) return a > 0 ? '—' : '0%';
+    return `${Math.round((a / v) * 1000) / 10}%`;
+  }
+
+  function renderApplicantBreakdown(breakdown, total) {
+    const order = [
+      { key: 'pending', label: 'Pending', cls: 'pending' },
+      { key: 'reviewed', label: 'Reviewed', cls: 'reviewed' },
+      { key: 'shortlisted', label: 'Shortlisted', cls: 'shortlisted' },
+      { key: 'rejected', label: 'Rejected', cls: 'rejected' },
+      { key: 'hired', label: 'Hired', cls: 'hired' },
+    ];
+    const b = breakdown || {};
+    const sum = total || order.reduce((n, o) => n + (Number(b[o.key]) || 0), 0);
+
+    if (!sum) {
+      return `
+        <div class="empty-state py-3">
+          <div class="empty-icon" aria-hidden="true"><i class="bi bi-people"></i></div>
+          <h6>No applicants yet</h6>
+          <p class="mb-0">Status counts will appear when students apply.</p>
+        </div>`;
+    }
+
+    return `
+      <div class="pipeline-list">
+        ${order.map((o) => {
+          const count = Number(b[o.key]) || 0;
+          const pct = Math.round((count / sum) * 100);
+          return `
+            <div class="pipeline-row">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small fw-semibold">${o.label}</span>
+                <span class="small text-muted">${count} · ${pct}%</span>
+              </div>
+              <div class="progress pipeline-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar pipeline-${o.cls}" style="width:${pct}%"></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function renderClosingSoon(list) {
+    const badge = document.getElementById('closingSoonBadge');
+    if (badge) badge.textContent = String((list || []).length);
+
+    if (!list || !list.length) {
+      return `
+        <div class="empty-state py-3">
+          <div class="empty-icon" aria-hidden="true"><i class="bi bi-calendar-check"></i></div>
+          <h6>No deadlines this week</h6>
+          <p class="mb-0">Jobs closing within 7 days will show here.</p>
+        </div>`;
+    }
+
+    return `
+      <ul class="closing-soon-list list-unstyled mb-0">
+        ${list.map((j) => {
+          const days = Number(j.days_left);
+          const urgent = days <= 2;
+          return `
+            <li class="closing-soon-item">
+              <div>
+                <a href="#" class="fw-semibold text-decoration-none" onclick="openJobDetails(${j.id}); return false;">${escHtml(j.title)}</a>
+                <div class="small text-muted">
+                  ${j.application_count || 0} applicant(s) · ${j.views || 0} views
+                </div>
+              </div>
+              <div class="text-end">
+                <span class="badge ${urgent ? 'bg-danger' : 'bg-warning text-dark'}">
+                  ${days === 0 ? 'Closes today' : days === 1 ? '1 day left' : `${days} days left`}
+                </span>
+                <div class="small text-muted mt-1">${formatDate(j.deadline)}</div>
+              </div>
+            </li>`;
+        }).join('')}
+      </ul>`;
+  }
+
+  function renderRecentApplicants(apps) {
+    if (!apps || !apps.length) {
+      return `
+        <tr><td colspan="5">
+          <div class="empty-state py-3">
+            <div class="empty-icon" aria-hidden="true"><i class="bi bi-inbox"></i></div>
+            <h6>No recent applications</h6>
+            <p class="mb-0">New applicants will appear here for quick review.</p>
+          </div>
+        </td></tr>`;
+    }
+
+    apps.forEach((a) => { applicantsCache[a.id] = a; });
+
+    return apps.map((a) => `
+      <tr>
+        <td>
+          <a href="#" class="fw-semibold text-decoration-none" onclick="openApplicantProfile(${a.id}); return false;">
+            ${escHtml(a.applicant_name)}
+          </a>
+          <div class="small text-muted">${escHtml(a.applicant_email || '')}</div>
+        </td>
+        <td class="small">${escHtml(a.job_title || '')}</td>
+        <td class="text-muted small">${formatDate(a.applied_at)}</td>
+        <td>${statusBadge(a.status)}</td>
+        <td>
+          <select class="form-select form-select-sm" style="min-width:120px"
+            data-prev="${escHtml(a.status || 'pending')}"
+            onchange="updateAppStatus(${a.id}, this.value, this)"
+            aria-label="Update status for ${escHtml(a.applicant_name)}">
+            <option value="pending" ${a.status === 'pending' ? 'selected' : ''}>Pending</option>
+            <option value="reviewed" ${a.status === 'reviewed' ? 'selected' : ''}>Reviewed</option>
+            <option value="shortlisted" ${a.status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
+            <option value="rejected" ${a.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="hired" ${a.status === 'hired' ? 'selected' : ''}>Hired</option>
+          </select>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderJobPerformance(jobs) {
+    const rows = (jobs || []).slice(0, 5);
+    if (!rows.length) {
+      return `
+        <tr><td colspan="5">
+          <div class="empty-state py-3">
+            <div class="empty-icon" aria-hidden="true"><i class="bi bi-graph-up"></i></div>
+            <h6>No job performance data yet</h6>
+            <p class="mb-0">Views and applications will appear after students browse your jobs.</p>
+          </div>
+        </td></tr>`;
+    }
+
+    return rows.map((j) => {
+      const views = Number(j.views) || 0;
+      const apps = Number(j.application_count) || 0;
+      return `
+        <tr>
+          <td class="fw-semibold">
+            <a href="#" class="text-decoration-none" onclick="openJobDetails(${j.id}); return false;">${escHtml(j.title)}</a>
+          </td>
+          <td><span class="badge bg-light text-secondary border">${views}</span></td>
+          <td><span class="badge bg-primary rounded-pill">${apps}</span></td>
+          <td class="fw-semibold">${conversionRate(views, apps)}</td>
+          <td>${jobStatusBadgeHtml(j)}</td>
+        </tr>`;
+    }).join('');
   }
 
   // -- Dashboard ------------------------------------------------------------
@@ -690,7 +935,8 @@
       let statsData = {
         stats: {
           totalJobs: 0, activeJobs: 0, pendingJobs: 0, rejectedJobs: 0,
-          approvedJobs: 0, totalApplications: 0, shortlisted: 0,
+          approvedJobs: 0, openJobs: 0, totalApplications: 0, shortlisted: 0,
+          statusBreakdown: {}, recentApplications: [], closingSoon: [], topJobs: [],
         },
       };
       let jobsData = { jobs: [] };
@@ -706,25 +952,31 @@
       }
 
       const stats = statsData.stats || {};
-      const activeJobs = stats.activeJobs || 0;
       const totalApplications = stats.totalApplications || 0;
       const shortlistedCount = stats.shortlisted || 0;
-      const approved = stats.approvedJobs ?? stats.activeJobs ?? 0;
       const pending = stats.pendingJobs ?? 0;
       const rejected = stats.rejectedJobs ?? 0;
+      const approvedCount = stats.approvedJobs ?? 0;
       const jobs = jobsData.jobs || [];
       employerJobsCache = {};
       jobs.forEach(j => { employerJobsCache[j.id] = j; });
 
+      const openCount = stats.openJobs ?? jobs.filter(isOpenJob).length;
+      const closingSoon = stats.closingSoon || [];
+      const recentApps = stats.recentApplications || [];
+      const topJobs = (stats.topJobs && stats.topJobs.length)
+        ? stats.topJobs
+        : [...jobs].sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0)).slice(0, 5);
+
       document.getElementById('statCards').innerHTML = `
         <div class="col-md-4">
-          <a href="#" class="stat-card clickable" onclick="navigateTo('jobs'); return false;" aria-label="View available jobs">
+          <a href="#" class="stat-card clickable" onclick="navigateTo('jobs', { status: 'open' }); return false;" aria-label="View open jobs">
             <div class="dash-stat">
               <div class="icon"><i class="bi bi-briefcase-fill" aria-hidden="true"></i></div>
               <div class="meta">
                 <div class="title">Available Jobs</div>
-                <div class="value">${activeJobs}</div>
-                <div class="hint">Approved and open</div>
+                <div class="value">${openCount}</div>
+                <div class="hint">Open for applications</div>
               </div>
             </div>
           </a>
@@ -742,13 +994,13 @@
           </a>
         </div>
         <div class="col-md-4">
-          <a href="#" class="stat-card clickable" onclick="navigateTo('applicants'); return false;" aria-label="View interview shortlist">
+          <a href="#" class="stat-card clickable" onclick="navigateTo('applicants'); return false;" aria-label="View shortlisted applicants">
             <div class="dash-stat">
-              <div class="icon"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></div>
+              <div class="icon"><i class="bi bi-star-fill" aria-hidden="true"></i></div>
               <div class="meta">
-                <div class="title">Interview Schedule</div>
+                <div class="title">Shortlisted</div>
                 <div class="value">${shortlistedCount}</div>
-                <div class="hint">Shortlisted applicants</div>
+                <div class="hint">${closingSoon.length} job(s) closing this week</div>
               </div>
             </div>
           </a>
@@ -757,10 +1009,10 @@
 
       document.getElementById('approvalSummary').innerHTML = `
         <div class="col-md-4">
-          <a href="#" class="approval-card approved" onclick="navigateTo('jobs', { status: 'active' }); return false;" aria-label="${approved} approved jobs">
+          <a href="#" class="approval-card approved" onclick="navigateTo('jobs', { status: 'approved' }); return false;" aria-label="${approvedCount} approved jobs">
             <div class="approval-icon" aria-hidden="true"><i class="bi bi-check-circle-fill"></i></div>
             <div>
-              <div class="approval-value">${approved}</div>
+              <div class="approval-value">${approvedCount}</div>
               <div class="approval-label">Approved</div>
             </div>
           </a>
@@ -785,11 +1037,17 @@
         </div>
       `;
 
+      document.getElementById('applicantBreakdown').innerHTML =
+        renderApplicantBreakdown(stats.statusBreakdown, totalApplications);
+      document.getElementById('closingSoonList').innerHTML = renderClosingSoon(closingSoon);
+      document.getElementById('recentApplicantsTable').innerHTML = renderRecentApplicants(recentApps);
+      document.getElementById('jobPerformanceTable').innerHTML = renderJobPerformance(topJobs);
+
       const latest = jobs.slice(0, 5);
       if (!latest.length) {
         document.getElementById('latestJobsTable').innerHTML = `
           <tr>
-            <td colspan="6">
+            <td colspan="7">
               <div class="empty-state">
                 <div class="empty-icon" aria-hidden="true"><i class="bi bi-briefcase"></i></div>
                 <h6>You have not posted any jobs yet.</h6>
@@ -808,6 +1066,7 @@
             </td>
             <td><span class="badge-type ${badgeClass(j.job_type)} job-type-label">${formatJobType(j.job_type)}</span></td>
             <td>${jobStatusBadgeHtml(j)}</td>
+            <td><span class="badge bg-light text-secondary border">${j.views || 0}</span></td>
             <td><span class="badge bg-primary rounded-pill">${j.application_count || 0}</span></td>
             <td class="text-muted small">${formatDate(j.created_at)}</td>
             <td class="text-end">
@@ -843,9 +1102,36 @@
     return map[type] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : '—');
   }
 
+  function isDeadlinePassed(job) {
+    if (!job || !job.deadline) return false;
+    const d = new Date(job.deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+    return d < today;
+  }
+
+  /** Approved by admin (active or closed — not pending/rejected) */
+  function isApprovedJob(job) {
+    return job.status === 'active' || job.status === 'closed';
+  }
+
+  /** Open = approved and still accepting applications */
+  function isOpenJob(job) {
+    return job.status === 'active' && !isDeadlinePassed(job);
+  }
+
+  /** Past = application deadline has passed */
+  function isPastJob(job) {
+    return isDeadlinePassed(job);
+  }
+
   function jobStatusBadgeHtml(j) {
+    if (isPastJob(j)) {
+      return '<span class="status-badge closed"><span class="visually-hidden">Status: </span>Past</span>';
+    }
     if (j.status === 'active') {
-      return '<span class="status-badge approved"><span class="visually-hidden">Status: </span>Approved</span>';
+      return '<span class="status-badge approved"><span class="visually-hidden">Status: </span>Open</span>';
     }
     if (j.status === 'rejected') {
       return `<div>
@@ -854,7 +1140,7 @@
       </div>`;
     }
     if (j.status === 'closed') {
-      return '<span class="status-badge closed"><span class="visually-hidden">Status: </span>Closed</span>';
+      return '<span class="status-badge closed"><span class="visually-hidden">Status: </span>Past</span>';
     }
     return '<span class="status-badge pending"><span class="visually-hidden">Status: </span>Pending</span>';
   }
@@ -929,7 +1215,13 @@
       const filterEl = document.getElementById('jobStatusFilter');
       const statusFilter = filterEl ? filterEl.value : (jobsFilterStatus || 'all');
       jobsFilterStatus = statusFilter;
-      if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'approved') {
+        jobs = jobs.filter(isApprovedJob);
+      } else if (statusFilter === 'open') {
+        jobs = jobs.filter(isOpenJob);
+      } else if (statusFilter === 'past') {
+        jobs = jobs.filter(isPastJob);
+      } else if (statusFilter && statusFilter !== 'all') {
         jobs = jobs.filter(j => j.status === statusFilter);
       }
 
@@ -1063,7 +1355,9 @@
       .filter(Boolean);
     const initials = companyInitials(a.applicant_name);
     const resumeHtml = a.resume_url
-      ? `<a href="${escHtml(a.resume_url)}" target="_blank" rel="noopener noreferrer">${escHtml(a.resume_url)}</a>`
+      ? `<a href="${escHtml(a.resume_url)}" target="_blank" rel="noopener noreferrer">${
+          String(a.resume_url).startsWith('/uploads/') ? 'View uploaded PDF' : escHtml(a.resume_url)
+        }</a>`
       : '<span class="text-muted">Not provided</span>';
 
     body.innerHTML = `
@@ -1111,6 +1405,10 @@
       await api.updateApplicationStatus(appId, status);
       showToast('Status updated to ' + status, 'success');
       selectEl.dataset.prev = status;
+      if (applicantsCache[appId]) applicantsCache[appId].status = status;
+      if (!document.getElementById('section-dashboard').classList.contains('d-none')) {
+        loadDashboard();
+      }
     } catch (err) {
       showToast('Failed to update status: ' + err.message, 'danger');
       selectEl.value = selectEl.dataset.prev || selectEl.value;

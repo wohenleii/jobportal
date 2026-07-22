@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
+const { notifyJobAlerts } = require('../utils/notifications');
+const { closeExpiredJobs } = require('../utils/closeExpiredJobs');
 
 // All admin routes require authentication + admin role
 router.use(authenticate, requireAdmin);
@@ -199,13 +201,17 @@ router.delete('/users/:id', async (req, res) => {
 
 // GET /api/admin/jobs — list all jobs (including pending/rejected/past)
 router.get('/jobs', async (req, res) => {
+  try {
+    await closeExpiredJobs();
+  } catch (_) {}
+
   const { page = 1, limit = 20, status = '' } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
   const clauses = [];
 
   if (status === 'past') {
-    clauses.push('j.deadline IS NOT NULL AND j.deadline < CURDATE()');
+    clauses.push("(j.status = 'closed' OR (j.deadline IS NOT NULL AND j.deadline < CURDATE()))");
   } else if (status) {
     clauses.push('j.status = ?');
     params.push(status);
@@ -264,6 +270,11 @@ router.put('/jobs/:id/status', async (req, res) => {
         'UPDATE jobs SET status = ?, rejection_reason = NULL WHERE id = ?',
         ['active', id]
       );
+      try {
+        await notifyJobAlerts(id);
+      } catch (notifyErr) {
+        console.error('Job alert notification error:', notifyErr);
+      }
       return res.json({ success: true, message: 'Job approved.' });
     }
 

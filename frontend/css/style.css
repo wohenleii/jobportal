@@ -1249,6 +1249,46 @@ body.is-student .nav-student-only {
 .approval-card.rejected .approval-value,
 .approval-card.rejected .approval-label { color: #991b1b; }
 
+/* Employer dashboard insights */
+.pipeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pipeline-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.pipeline-bar .progress-bar {
+  border-radius: 999px;
+}
+
+.pipeline-pending { background: #f59e0b !important; }
+.pipeline-reviewed { background: #0ea5e9 !important; }
+.pipeline-shortlisted { background: #2563eb !important; }
+.pipeline-rejected { background: #dc2626 !important; }
+.pipeline-hired { background: #16a34a !important; }
+
+.closing-soon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.closing-soon-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -1452,6 +1492,69 @@ body.is-student .nav-student-only {
   top: 20px;
   right: 20px;
   z-index: 9999;
+}
+
+/* ── Notifications ──────────────────────────────────────────────────────── */
+.notif-dropdown {
+  width: min(360px, 92vw);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.notif-bell .badge {
+  font-size: 0.65rem;
+  padding: 0.25em 0.45em;
+}
+
+.notif-item {
+  white-space: normal;
+  border-bottom: 1px solid var(--border);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-unread {
+  background: #EFF6FF;
+}
+
+.job-removed-card {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+/* ── Interest chips (job alerts) ────────────────────────────────────────── */
+.interest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.interest-chip:has(input:checked) {
+  border-color: var(--primary);
+  background: #EFF6FF;
+  color: var(--primary-dark);
+}
+
+.interest-chip input {
+  margin: 0;
 }
 
 footer.bg-dark {

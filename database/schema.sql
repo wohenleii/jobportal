@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   bio TEXT DEFAULT NULL,
   skills VARCHAR(500) DEFAULT NULL,
   resume_url VARCHAR(255) DEFAULT NULL,
+  interest_fields VARCHAR(500) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -84,6 +85,21 @@ CREATE TABLE IF NOT EXISTS job_views (
   ip_address VARCHAR(45) DEFAULT NULL,
   viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+);
+
+-- In-app notifications (application status + job alerts)
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type ENUM('application_status', 'job_alert') NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  link VARCHAR(255) DEFAULT NULL,
+  related_id INT DEFAULT NULL,
+  is_read TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_notifications_user (user_id, is_read, created_at)
 );
 
 -- Seed admin user (password: password)

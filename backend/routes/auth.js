@@ -2,8 +2,63 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const db = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+
+const JOB_INTEREST_CATEGORIES = [
+  'Software & IT',
+  'Sales',
+  'Marketing',
+  'Accounting & Finance',
+  'Human Resources',
+  'Customer Service',
+  'Administration',
+  'Engineering',
+  'Design',
+  'Operations',
+  'Healthcare',
+  'Education',
+  'Other',
+];
+
+const resumeDir = path.join(__dirname, '../../uploads/resumes');
+fs.mkdirSync(resumeDir, { recursive: true });
+
+const resumeUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, resumeDir),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.pdf';
+      cb(null, `user-${req.user.id}-${Date.now()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok =
+      file.mimetype === 'application/pdf' ||
+      path.extname(file.originalname).toLowerCase() === '.pdf';
+    if (!ok) return cb(new Error('Only PDF resumes are allowed.'));
+    cb(null, true);
+  },
+});
+
+function normalizeInterestFields(input) {
+  let list = [];
+  if (Array.isArray(input)) {
+    list = input.map((s) => String(s).trim()).filter(Boolean);
+  } else if (typeof input === 'string') {
+    list = input.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  const unique = [...new Set(list)];
+  const invalid = unique.filter((c) => !JOB_INTEREST_CATEGORIES.includes(c));
+  if (invalid.length) {
+    return { error: `Invalid interest field(s): ${invalid.join(', ')}` };
+  }
+  return { value: unique.join(',') || null };
+}
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -99,17 +154,26 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// GET /api/auth/interest-categories — fields of interest for job alerts
+router.get('/interest-categories', (_req, res) => {
+  res.json({ success: true, categories: JOB_INTEREST_CATEGORIES });
+});
+
 // GET /api/auth/me — get current user profile
 router.get('/me', authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, name, email, role, avatar, bio, skills, resume_url, created_at FROM users WHERE id = ?',
+      'SELECT id, name, email, role, avatar, bio, skills, resume_url, interest_fields, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
-    res.json({ success: true, user: rows[0] });
+    const user = rows[0];
+    user.interest_fields_list = user.interest_fields
+      ? String(user.interest_fields).split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    res.json({ success: true, user });
   } catch (err) {
     console.error('Get me error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
@@ -118,17 +182,67 @@ router.get('/me', authenticate, async (req, res) => {
 
 // PUT /api/auth/profile — update profile
 router.put('/profile', authenticate, async (req, res) => {
-  const { name, bio, skills, resume_url } = req.body;
+  const { name, bio, skills, resume_url, interest_fields } = req.body;
   try {
-    await db.query(
-      'UPDATE users SET name = ?, bio = ?, skills = ?, resume_url = ? WHERE id = ?',
-      [name, bio, skills, resume_url, req.user.id]
-    );
+    let interestsValue = undefined;
+    if (interest_fields !== undefined) {
+      const normalized = normalizeInterestFields(interest_fields);
+      if (normalized.error) {
+        return res.status(400).json({ success: false, message: normalized.error });
+      }
+      interestsValue = normalized.value;
+    }
+
+    if (interestsValue !== undefined) {
+      await db.query(
+        'UPDATE users SET name = ?, bio = ?, skills = ?, resume_url = ?, interest_fields = ? WHERE id = ?',
+        [name, bio, skills, resume_url, interestsValue, req.user.id]
+      );
+    } else {
+      await db.query(
+        'UPDATE users SET name = ?, bio = ?, skills = ?, resume_url = ? WHERE id = ?',
+        [name, bio, skills, resume_url, req.user.id]
+      );
+    }
     res.json({ success: true, message: 'Profile updated successfully.' });
   } catch (err) {
     console.error('Update profile error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
+});
+
+// POST /api/auth/resume — upload PDF resume (students)
+router.post('/resume', authenticate, (req, res) => {
+  resumeUpload.single('resume')(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message || 'Upload failed.' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Please select a PDF file to upload.' });
+    }
+
+    try {
+      const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+
+      // Remove previous uploaded resume file if it was stored locally
+      const [rows] = await db.query('SELECT resume_url FROM users WHERE id = ?', [req.user.id]);
+      const prev = rows[0]?.resume_url;
+      if (prev && prev.startsWith('/uploads/resumes/')) {
+        const prevPath = path.join(__dirname, '../..', prev);
+        fs.promises.unlink(prevPath).catch(() => {});
+      }
+
+      await db.query('UPDATE users SET resume_url = ? WHERE id = ?', [resumeUrl, req.user.id]);
+      res.json({
+        success: true,
+        message: 'Resume uploaded successfully.',
+        resume_url: resumeUrl,
+      });
+    } catch (uploadErr) {
+      console.error('Resume upload error:', uploadErr);
+      res.status(500).json({ success: false, message: 'Server error during upload.' });
+    }
+  });
 });
 
 // GET /api/auth/employer-profile — get employer company profile

@@ -2,9 +2,15 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticate, requireEmployer, requireAdmin } = require('../middleware/auth');
+const { notifyJobAlerts } = require('../utils/notifications');
+const { closeExpiredJobs } = require('../utils/closeExpiredJobs');
 
 // GET /api/jobs — list jobs with search + filter + sort
 router.get('/', async (req, res) => {
+  try {
+    await closeExpiredJobs();
+  } catch (_) {}
+
   const {
     search = '',
     category = '',
@@ -20,7 +26,7 @@ router.get('/', async (req, res) => {
 
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
-  // Hide expired jobs from the public site
+  // Only open (active + not past deadline) jobs on the public site
   let where = "WHERE j.status = 'active' AND (j.deadline IS NULL OR j.deadline >= CURDATE())";
 
   if (search) {
@@ -124,6 +130,7 @@ router.get('/', async (req, res) => {
 // GET /api/jobs/my — employer's own jobs with application counts
 router.get('/my', authenticate, requireEmployer, async (req, res) => {
   try {
+    await closeExpiredJobs();
     const [empRows] = await db.query('SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1', [req.user.id]);
     if (empRows.length === 0) {
       return res.json({ success: true, jobs: [] });
@@ -441,6 +448,14 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
         id,
       ]
     );
+
+    if (nextStatus === 'active' && existing.status !== 'active') {
+      try {
+        await notifyJobAlerts(id);
+      } catch (notifyErr) {
+        console.error('Job alert notification error:', notifyErr);
+      }
+    }
 
     const message = clearRejectionReason
       ? 'Job updated and resubmitted for admin review.'
