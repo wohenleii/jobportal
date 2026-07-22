@@ -131,6 +131,15 @@ router.post('/login', async (req, res) => {
     }
 
     const user = rows[0];
+
+    if (user.account_status === 'removed') {
+      return res.status(403).json({
+        success: false,
+        message: 'This account is invalid.',
+        code: 'ACCOUNT_INVALID',
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });

@@ -72,7 +72,7 @@ router.get('/employer/stats', authenticate, requireEmployer, async (req, res) =>
     );
 
     const [statusRows] = await db.query(
-      `SELECT a.status, COUNT(*) as count
+      `SELECT a.status AS app_status, COUNT(*) AS total
        FROM applications a
        JOIN jobs j ON a.job_id = j.id
        WHERE j.employer_id = ?
@@ -87,15 +87,34 @@ router.get('/employer/stats', authenticate, requireEmployer, async (req, res) =>
       hired: 0,
     };
     statusRows.forEach((r) => {
-      if (Object.prototype.hasOwnProperty.call(statusBreakdown, r.status)) {
-        statusBreakdown[r.status] = r.count;
+      const key = String(r.app_status || '').trim().toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(statusBreakdown, key)) {
+        statusBreakdown[key] = Number(r.total) || 0;
       }
     });
 
+    // If GROUP BY returned nothing but applications exist, fill from a direct scan
+    const breakdownSum = Object.values(statusBreakdown).reduce((n, v) => n + v, 0);
+    if (Number(totalApplications) > 0 && breakdownSum === 0) {
+      const [allApps] = await db.query(
+        `SELECT a.status
+         FROM applications a
+         JOIN jobs j ON a.job_id = j.id
+         WHERE j.employer_id = ?`,
+        [employerId]
+      );
+      allApps.forEach((row) => {
+        const key = String(row.status || '').trim().toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(statusBreakdown, key)) {
+          statusBreakdown[key] += 1;
+        }
+      });
+    }
+
     const [recentApplications] = await db.query(
-      `SELECT a.id, a.status, a.applied_at, a.job_id,
-              u.name as applicant_name, u.email as applicant_email, u.skills, u.resume_url, u.bio,
-              j.title as job_title, j.job_type
+      `SELECT a.id, a.status, a.applied_at, a.job_id, a.cover_letter,
+              u.name AS applicant_name, u.email AS applicant_email, u.skills, u.resume_url, u.bio,
+              j.title AS job_title, j.job_type
        FROM applications a
        JOIN users u ON a.user_id = u.id
        JOIN jobs j ON a.job_id = j.id
@@ -133,15 +152,15 @@ router.get('/employer/stats', authenticate, requireEmployer, async (req, res) =>
     res.json({
       success: true,
       stats: {
-        totalJobs,
-        activeJobs,
-        pendingJobs,
-        rejectedJobs,
-        approvedJobs,
-        openJobs,
+        totalJobs: Number(totalJobs) || 0,
+        activeJobs: Number(activeJobs) || 0,
+        pendingJobs: Number(pendingJobs) || 0,
+        rejectedJobs: Number(rejectedJobs) || 0,
+        approvedJobs: Number(approvedJobs) || 0,
+        openJobs: Number(openJobs) || 0,
         closingSoonCount: closingSoon.length,
-        totalApplications,
-        shortlisted,
+        totalApplications: Number(totalApplications) || 0,
+        shortlisted: Number(shortlisted) || Number(statusBreakdown.shortlisted) || 0,
         statusBreakdown,
         recentApplications,
         closingSoon,

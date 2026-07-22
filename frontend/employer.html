@@ -781,6 +781,21 @@
     return `${Math.round((a / v) * 1000) / 10}%`;
   }
 
+  function buildStatusBreakdown(applications) {
+    const breakdown = {
+      pending: 0,
+      reviewed: 0,
+      shortlisted: 0,
+      rejected: 0,
+      hired: 0,
+    };
+    (applications || []).forEach((a) => {
+      const key = String(a.status || 'pending').trim().toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(breakdown, key)) breakdown[key] += 1;
+    });
+    return breakdown;
+  }
+
   function renderApplicantBreakdown(breakdown, total) {
     const order = [
       { key: 'pending', label: 'Pending', cls: 'pending' },
@@ -790,7 +805,9 @@
       { key: 'hired', label: 'Hired', cls: 'hired' },
     ];
     const b = breakdown || {};
-    const sum = total || order.reduce((n, o) => n + (Number(b[o.key]) || 0), 0);
+    const fromBreakdown = order.reduce((n, o) => n + (Number(b[o.key]) || 0), 0);
+    // Prefer real breakdown sum so percentages match the bars
+    const sum = fromBreakdown > 0 ? fromBreakdown : (Number(total) || 0);
 
     if (!sum) {
       return `
@@ -940,11 +957,13 @@
         },
       };
       let jobsData = { jobs: [] };
+      let appsData = { applications: [] };
       let statsError = null;
       let jobsError = null;
 
       try { statsData = await api.getEmployerStats(); } catch (e) { statsError = e; console.warn('Stats error:', e.message); }
       try { jobsData = await api.getEmployerJobs(); } catch (e) { jobsError = e; console.warn('Jobs error:', e.message); }
+      try { appsData = await api.getEmployerApplications(); } catch (e) { console.warn('Apps error:', e.message); }
 
       if (statsError && jobsError) {
         renderDashboardError(statsError.message || jobsError.message);
@@ -952,18 +971,30 @@
       }
 
       const stats = statsData.stats || {};
-      const totalApplications = stats.totalApplications || 0;
-      const shortlistedCount = stats.shortlisted || 0;
+      const jobs = jobsData.jobs || [];
+      const applications = appsData.applications || [];
+      employerJobsCache = {};
+      jobs.forEach(j => { employerJobsCache[j.id] = j; });
+      applications.forEach(a => { applicantsCache[a.id] = a; });
+
+      // Always derive breakdown from live applicant list so it stays in sync
+      const liveBreakdown = buildStatusBreakdown(applications);
+      const liveBreakdownSum = Object.values(liveBreakdown).reduce((n, v) => n + v, 0);
+      const apiBreakdown = stats.statusBreakdown || {};
+      const apiBreakdownSum = Object.values(apiBreakdown).reduce((n, v) => n + (Number(v) || 0), 0);
+      const statusBreakdown = liveBreakdownSum > 0 ? liveBreakdown : apiBreakdown;
+
+      const totalApplications = applications.length || Number(stats.totalApplications) || 0;
+      const shortlistedCount = liveBreakdown.shortlisted || Number(stats.shortlisted) || 0;
       const pending = stats.pendingJobs ?? 0;
       const rejected = stats.rejectedJobs ?? 0;
       const approvedCount = stats.approvedJobs ?? 0;
-      const jobs = jobsData.jobs || [];
-      employerJobsCache = {};
-      jobs.forEach(j => { employerJobsCache[j.id] = j; });
 
       const openCount = stats.openJobs ?? jobs.filter(isOpenJob).length;
       const closingSoon = stats.closingSoon || [];
-      const recentApps = stats.recentApplications || [];
+      const recentApps = applications.length
+        ? applications.slice(0, 8)
+        : (stats.recentApplications || []);
       const topJobs = (stats.topJobs && stats.topJobs.length)
         ? stats.topJobs
         : [...jobs].sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0)).slice(0, 5);
@@ -1038,7 +1069,7 @@
       `;
 
       document.getElementById('applicantBreakdown').innerHTML =
-        renderApplicantBreakdown(stats.statusBreakdown, totalApplications);
+        renderApplicantBreakdown(statusBreakdown, totalApplications || liveBreakdownSum || apiBreakdownSum);
       document.getElementById('closingSoonList').innerHTML = renderClosingSoon(closingSoon);
       document.getElementById('recentApplicantsTable').innerHTML = renderRecentApplicants(recentApps);
       document.getElementById('jobPerformanceTable').innerHTML = renderJobPerformance(topJobs);

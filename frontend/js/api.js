@@ -227,8 +227,8 @@ const api = {
     return this.get(`/admin/users?${qs}`);
   },
 
-  async deleteUser(id) {
-    return this.delete(`/admin/users/${id}`);
+  async deleteUser(id, reason) {
+    return this.put(`/admin/users/${id}/remove`, { reason });
   },
 
   async getAdminJobs(params = {}) {

@@ -8,6 +8,7 @@
     "dev": "nodemon backend/server.js",
     "setup-db": "node backend/scripts/setup-db.js",
     "migrate-notifications": "node backend/scripts/add-notifications-alerts.js",
+    "migrate-user-removal": "node backend/scripts/add-user-removal.js",
     "seed-batch4": "node backend/scripts/seed-new-jobs-batch4.js"
   },
   "repository": {

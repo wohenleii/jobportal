@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS users (
   skills VARCHAR(500) DEFAULT NULL,
   resume_url VARCHAR(255) DEFAULT NULL,
   interest_fields VARCHAR(500) DEFAULT NULL,
+  account_status ENUM('active', 'removed') DEFAULT 'active',
+  removal_reason TEXT DEFAULT NULL,
+  removed_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

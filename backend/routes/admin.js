@@ -11,7 +11,9 @@ router.use(authenticate, requireAdmin);
 // GET /api/admin/stats — dashboard statistics
 router.get('/stats', async (req, res) => {
   try {
-    const [[{ totalUsers }]] = await db.query('SELECT COUNT(*) as totalUsers FROM users');
+    const [[{ totalUsers }]] = await db.query(
+      "SELECT COUNT(*) as totalUsers FROM users WHERE account_status = 'active' OR account_status IS NULL"
+    );
     const [[{ totalJobs }]] = await db.query('SELECT COUNT(*) as totalJobs FROM jobs');
     const [[{ activeJobs }]] = await db.query("SELECT COUNT(*) as activeJobs FROM jobs WHERE status = 'active'");
     const [[{ totalApplications }]] = await db.query('SELECT COUNT(*) as totalApplications FROM applications');
@@ -161,20 +163,29 @@ router.put('/employers/:id/status', async (req, res) => {
 
 // GET /api/admin/users — list all users
 router.get('/users', async (req, res) => {
-  const { page = 1, limit = 20, role = '' } = req.query;
+  const { page = 1, limit = 20, role = '', account_status = '' } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
-  let where = '';
+  const clauses = [];
 
   if (role) {
-    where = 'WHERE role = ?';
+    clauses.push('role = ?');
     params.push(role);
   }
+  if (account_status === 'active' || account_status === 'removed') {
+    clauses.push('account_status = ?');
+    params.push(account_status);
+  }
+
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
 
   try {
     const [[{ total }]] = await db.query(`SELECT COUNT(*) as total FROM users ${where}`, params);
     const [users] = await db.query(
-      `SELECT id, name, email, role, created_at FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      `SELECT id, name, email, role, account_status, removal_reason, removed_at, created_at
+       FROM users ${where}
+       ORDER BY created_at DESC
+       LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), offset]
     );
     res.json({ success: true, users, pagination: { total, page: parseInt(page), limit: parseInt(limit) } });
@@ -184,15 +195,72 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// DELETE /api/admin/users/:id — delete user
+// PUT /api/admin/users/:id/remove — soft-remove user (requires reason)
+router.put('/users/:id/remove', async (req, res) => {
+  const { id } = req.params;
+  const reason = String(req.body.reason || '').trim();
+
+  if (parseInt(id) === req.user.id) {
+    return res.status(400).json({ success: false, message: 'Cannot remove your own account.' });
+  }
+  if (!reason) {
+    return res.status(400).json({ success: false, message: 'A reason is required to remove a user.' });
+  }
+
+  try {
+    const [rows] = await db.query('SELECT id, role, account_status FROM users WHERE id = ?', [id]);
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (rows[0].role === 'admin') {
+      return res.status(400).json({ success: false, message: 'Admin accounts cannot be removed this way.' });
+    }
+    if (rows[0].account_status === 'removed') {
+      return res.status(400).json({ success: false, message: 'This account is already removed.' });
+    }
+
+    await db.query(
+      `UPDATE users
+       SET account_status = 'removed', removal_reason = ?, removed_at = NOW()
+       WHERE id = ?`,
+      [reason, id]
+    );
+
+    res.json({ success: true, message: 'User account removed. They can no longer sign in.' });
+  } catch (err) {
+    console.error('Admin remove user error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// DELETE kept for compatibility — same as soft-remove, requires reason in body
 router.delete('/users/:id', async (req, res) => {
   const { id } = req.params;
+  const reason = String(req.body?.reason || '').trim();
+
   if (parseInt(id) === req.user.id) {
-    return res.status(400).json({ success: false, message: 'Cannot delete your own account.' });
+    return res.status(400).json({ success: false, message: 'Cannot remove your own account.' });
   }
+  if (!reason) {
+    return res.status(400).json({ success: false, message: 'A reason is required to remove a user.' });
+  }
+
   try {
-    await db.query('DELETE FROM users WHERE id = ?', [id]);
-    res.json({ success: true, message: 'User deleted.' });
+    const [rows] = await db.query('SELECT id, role, account_status FROM users WHERE id = ?', [id]);
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (rows[0].role === 'admin') {
+      return res.status(400).json({ success: false, message: 'Admin accounts cannot be removed this way.' });
+    }
+
+    await db.query(
+      `UPDATE users
+       SET account_status = 'removed', removal_reason = ?, removed_at = NOW()
+       WHERE id = ?`,
+      [reason, id]
+    );
+    res.json({ success: true, message: 'User account removed. They can no longer sign in.' });
   } catch (err) {
     console.error('Admin delete user error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
@@ -201,9 +269,8 @@ router.delete('/users/:id', async (req, res) => {
 
 // GET /api/admin/jobs — list all jobs (including pending/rejected/past)
 router.get('/jobs', async (req, res) => {
-  try {
-    await closeExpiredJobs();
-  } catch (_) {}
+  // Don't block the response on auto-close
+  closeExpiredJobs().catch(() => {});
 
   const { page = 1, limit = 20, status = '' } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
