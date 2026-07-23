@@ -217,6 +217,15 @@ const api = {
     return this.put(`/applications/${appId}/status`, { status });
   },
 
+  // ── AI Chat (Gemini proxy — key stays on server) ──────────────────────
+  async chat(message, history = []) {
+    return this.post('/chat', { message, history });
+  },
+
+  async getChatStatus() {
+    return this.get('/chat/status');
+  },
+
   // ── Admin ─────────────────────────────────────────────────────────────
   async getAdminStats() {
     return this.get('/admin/stats');

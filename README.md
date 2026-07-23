@@ -45,14 +45,23 @@ jobportal/
 
 ### 1. Configure environment
 
-Edit `backend/.env` with your MySQL credentials:
+Edit `backend/.env` with your MySQL credentials and (optional) Gemini key:
 ```
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=jobportal
 JWT_SECRET=change_this_secret
+
+# Google AI Studio key — server-only (never commit; already in .gitignore)
+GEMINI_API_KEY=your_google_ai_studio_api_key_here
+GEMINI_MODEL=gemini-3.5-flash
+GEMINI_USER_DAILY_LIMIT=40
+GEMINI_USER_MINUTE_LIMIT=6
+GEMINI_GLOBAL_DAILY_LIMIT=400
 ```
+
+Get a key from [Google AI Studio](https://aistudio.google.com/apikey). Also set a quota/budget on the key in Google Cloud / AI Studio so abuse stops even if the key leaks. The app never sends the key to the browser — chat goes through `POST /api/chat` with login + rate limits.
 
 ### 2. Set up the database
 

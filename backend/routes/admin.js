@@ -85,7 +85,7 @@ router.get('/employers', async (req, res) => {
       params
     );
     const [employers] = await db.query(
-      `SELECT e.id, e.company_name, e.company_website, e.company_description, e.industry, e.location,
+      `SELECT e.id, e.company_name, e.company_website, e.company_description, e.industry, e.location, e.uen,
               e.verification_status, e.rejection_reason, e.verified_at, e.created_at,
               u.id as user_id, u.name as contact_name, u.email as contact_email
        FROM employers e

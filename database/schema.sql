@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS employers (
   company_description TEXT DEFAULT NULL,
   industry VARCHAR(100) DEFAULT NULL,
   location VARCHAR(150) DEFAULT NULL,
+  uen VARCHAR(50) DEFAULT NULL,
   verification_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
   rejection_reason TEXT DEFAULT NULL,
   verified_at TIMESTAMP NULL DEFAULT NULL,

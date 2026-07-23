@@ -262,6 +262,11 @@
           <input type="text" class="form-control" id="cp_company_name" placeholder="e.g. Tech Corp" required />
         </div>
         <div class="mb-3">
+          <label class="form-label fw-semibold" for="cp_uen">UEN <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="cp_uen" maxlength="50" placeholder="e.g. 201912345A" required />
+          <div class="form-text">Unique Entity Number — required so admins can verify your company before approval.</div>
+        </div>
+        <div class="mb-3">
           <label class="form-label fw-semibold" for="cp_company_description">Company Overview</label>
           <textarea class="form-control" id="cp_company_description" rows="4" placeholder="Describe your company, culture, and what you do..."></textarea>
         </div>
@@ -537,6 +542,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
+<script src="/js/chatbot.js"></script>
 <script>
   // -- Auth guard -----------------------------------------------------------
   const user = api.getUser();
@@ -593,6 +599,7 @@
     if (!profile) return false;
     return !!(
       String(profile.company_name || '').trim() &&
+      String(profile.uen || '').trim() &&
       String(profile.company_description || '').trim() &&
       String(profile.industry || '').trim() &&
       String(profile.location || '').trim()
@@ -1604,6 +1611,7 @@
       const data = await api.getEmployerProfile();
       const p = data.profile || {};
       document.getElementById('cp_company_name').value        = p.company_name || '';
+      document.getElementById('cp_uen').value                 = p.uen || '';
       document.getElementById('cp_company_description').value = p.company_description || '';
       setSelectValue('cp_industry', mapIndustryValue(p.industry));
       setSelectValue('cp_location', mapLocationValue(p.location));
@@ -1664,9 +1672,11 @@
   async function saveProfile() {
     const form = document.getElementById('profileForm');
     const company_name = document.getElementById('cp_company_name').value.trim();
+    const uen = document.getElementById('cp_uen').value.trim();
     const industry = document.getElementById('cp_industry').value.trim();
     const location = document.getElementById('cp_location').value.trim();
     if (!company_name) { showToast('Company name is required.', 'danger'); return; }
+    if (!uen) { showToast('UEN is required for admin verification.', 'danger'); return; }
     if (!industry) { showToast('Please select an industry.', 'danger'); return; }
     if (!location) { showToast('Please select a Singapore location.', 'danger'); return; }
 
@@ -1678,6 +1688,7 @@
 
     const payload = {
       company_name,
+      uen,
       company_description: document.getElementById('cp_company_description').value.trim(),
       industry,
       location,

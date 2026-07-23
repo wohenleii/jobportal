@@ -318,6 +318,7 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
                 ? `<div class="small text-danger mt-1"><i class="bi bi-info-circle me-1"></i>${escapeHtml(e.rejection_reason)}</div>`
                 : ''}
             </td>
+            <td class="font-monospace small">${escapeHtml(e.uen) || '<span class="text-muted">—</span>'}</td>
             <td>
               <div class="fw-semibold small">${escapeHtml(e.contact_name)}</div>
               <div class="text-muted small">${escapeHtml(e.contact_email)}</div>
@@ -336,7 +337,7 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
             </td>
           </tr>
         `).join('')
-        : '<tr><td colspan="7" class="text-center text-muted py-4">No companies found.</td></tr>';
+        : '<tr><td colspan="8" class="text-center text-muted py-4">No companies found.</td></tr>';
       renderAdminPagination('companiesPagination', data.pagination, p => { companiesPage = p; loadCompanies(); });
     } catch (err) {
       showToast(err.message || 'Failed to load companies', 'danger');
@@ -370,6 +371,13 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
         ? `<div class="alert alert-danger"><strong>Rejection reason:</strong> ${escapeHtml(e.rejection_reason)}</div>`
         : ''}
       <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-3 h-100">
+            <div class="small text-muted">UEN</div>
+            <div class="fw-semibold font-monospace">${escapeHtml(e.uen) || '<span class="text-muted">Not provided</span>'}</div>
+            <div class="small text-muted mt-1">Check this against ACRA / Bizfile before approving.</div>
+          </div>
+        </div>
         <div class="col-md-6">
           <div class="p-3 bg-light rounded-3 h-100">
             <div class="small text-muted">Contact</div>

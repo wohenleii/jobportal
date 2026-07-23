@@ -273,10 +273,18 @@ router.get('/employer-profile', authenticate, async (req, res) => {
 
 // PUT /api/auth/employer-profile — update employer company profile
 router.put('/employer-profile', authenticate, async (req, res) => {
-  const { company_name, company_description, industry, location, company_website } = req.body;
+  const { company_name, company_description, industry, location, company_website, uen } = req.body;
 
   if (!company_name || !String(company_name).trim()) {
     return res.status(400).json({ success: false, message: 'Company name is required.' });
+  }
+
+  const uenValue = uen ? String(uen).trim() : '';
+  if (!uenValue) {
+    return res.status(400).json({ success: false, message: 'UEN is required for company verification.' });
+  }
+  if (uenValue.length > 50) {
+    return res.status(400).json({ success: false, message: 'UEN must be 50 characters or fewer.' });
   }
 
   const allowedIndustries = [
@@ -317,13 +325,14 @@ router.put('/employer-profile', authenticate, async (req, res) => {
     }
     // Employers may update their profile while pending/rejected/approved
     await db.query(
-      'UPDATE employers SET company_name=?, company_description=?, industry=?, location=?, company_website=? WHERE id=?',
+      'UPDATE employers SET company_name=?, company_description=?, industry=?, location=?, company_website=?, uen=? WHERE id=?',
       [
         String(company_name).trim(),
         company_description ? String(company_description).trim() : null,
         industry || null,
         location || null,
         website || null,
+        uenValue,
         rows[0].id,
       ]
     );
