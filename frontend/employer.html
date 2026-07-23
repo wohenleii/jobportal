@@ -378,19 +378,6 @@
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">School</label>
-              <select class="form-select" id="pj_school">
-                <option value="" selected>All / Not school-specific...</option>
-                <option value="School of Business">School of Business</option>
-                <option value="School of Engineering">School of Engineering</option>
-                <option value="School of Applied Science">School of Applied Science</option>
-                <option value="School of Infocomm">School of Infocomm</option>
-                <option value="School of Sports, Health & Leisure">School of Sports, Health &amp; Leisure</option>
-                <option value="School of Hospitality">School of Hospitality</option>
-                <option value="School of Technology for the Arts">School of Technology for the Arts</option>
-              </select>
-            </div>
             <div class="col-md-3">
               <label class="form-label fw-semibold">Salary Min</label>
               <input type="number" class="form-control" id="pj_salary_min" placeholder="e.g. 3000" min="0" />
@@ -483,19 +470,6 @@
                 <option value="Healthcare">Healthcare</option>
                 <option value="Education">Education</option>
                 <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">School</label>
-              <select class="form-select" id="ej_school">
-                <option value="">All / Not school-specific...</option>
-                <option value="School of Business">School of Business</option>
-                <option value="School of Engineering">School of Engineering</option>
-                <option value="School of Applied Science">School of Applied Science</option>
-                <option value="School of Infocomm">School of Infocomm</option>
-                <option value="School of Sports, Health & Leisure">School of Sports, Health &amp; Leisure</option>
-                <option value="School of Hospitality">School of Hospitality</option>
-                <option value="School of Technology for the Arts">School of Technology for the Arts</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -1331,6 +1305,7 @@
 
   async function toggleJobStatus(jobId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'closed' : 'active';
+    if (!confirm(`${newStatus === 'closed' ? 'Close' : 'Reopen'} this job?`)) return;
     try {
       await api.updateJob(jobId, { status: newStatus });
       showToast(`Job ${newStatus === 'active' ? 're-opened' : 'closed'} successfully.`, 'success');
@@ -1497,7 +1472,6 @@
       location:    document.getElementById('pj_location').value.trim(),
       job_type:    document.getElementById('pj_job_type').value,
       category:    document.getElementById('pj_category').value.trim(),
-      school:      document.getElementById('pj_school').value.trim(),
       salary_min:  document.getElementById('pj_salary_min').value || null,
       salary_max:  document.getElementById('pj_salary_max').value || null,
       deadline:    document.getElementById('pj_deadline').value || null,
@@ -1533,7 +1507,6 @@
       setSelectValue('ej_location', job.location || '');
       document.getElementById('ej_job_type').value     = job.job_type || 'full-time';
       setSelectValue('ej_category', job.category || '');
-      setSelectValue('ej_school', job.school || '');
       document.getElementById('ej_salary_min').value   = job.salary_min || '';
       document.getElementById('ej_salary_max').value   = job.salary_max || '';
       document.getElementById('ej_deadline').value     = job.deadline ? job.deadline.split('T')[0] : '';
@@ -1585,7 +1558,6 @@
       location:     document.getElementById('ej_location').value.trim(),
       job_type:     document.getElementById('ej_job_type').value,
       category:     document.getElementById('ej_category').value.trim(),
-      school:       document.getElementById('ej_school').value.trim(),
       salary_min:   document.getElementById('ej_salary_min').value || null,
       salary_max:   document.getElementById('ej_salary_max').value || null,
       deadline:     document.getElementById('ej_deadline').value || null,

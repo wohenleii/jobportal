@@ -76,20 +76,6 @@
               </select>
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">School</label>
-              <select class="form-select" id="school">
-                <option value="" selected>All / Not school-specific...</option>
-                <option value="School of Business">School of Business</option>
-                <option value="School of Engineering">School of Engineering</option>
-                <option value="School of Applied Science">School of Applied Science</option>
-                <option value="School of Infocomm">School of Infocomm</option>
-                <option value="School of Sports, Health & Leisure">School of Sports, Health &amp; Leisure</option>
-                <option value="School of Hospitality">School of Hospitality</option>
-                <option value="School of Technology for the Arts">School of Technology for the Arts</option>
-              </select>
-            </div>
-
             <div class="col-12">
               <label class="form-label fw-semibold">Location <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="location" placeholder="e.g. San Francisco, CA or Remote" required />
@@ -134,15 +120,6 @@
     </div>
   </div>
 </div>
-
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-meta">
-      <span>© 2026 JobPortal. All rights reserved.</span>
-      <a href="mailto:kwenz782@yahoo.com"><i class="bi bi-envelope me-1"></i>Need help? Contact us</a>
-    </div>
-  </div>
-</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
@@ -201,7 +178,6 @@
       title: document.getElementById('title').value.trim(),
       job_type: document.getElementById('job_type').value,
       category: document.getElementById('category').value.trim(),
-      school: document.getElementById('school').value.trim(),
       location: document.getElementById('location').value.trim(),
       salary_min: document.getElementById('salary_min').value || null,
       salary_max: document.getElementById('salary_max').value || null,
@@ -230,6 +206,12 @@
   });
 
   checkCompanyVerification();
+</script>
+</body>
+</html>
+      btn.innerHTML = '<i class="bi bi-send me-2"></i>Post Job';
+    }
+  });
 </script>
 </body>
 </html>

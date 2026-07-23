@@ -2,10 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticate, requireEmployer, requireAdmin } = require('../middleware/auth');
-const { notifyJobAlerts, createNotification } = require('../utils/notifications');
+const { notifyJobAlerts } = require('../utils/notifications');
 const { closeExpiredJobs } = require('../utils/closeExpiredJobs');
-const { sendAdminJobSubmissionAlert, sendEmployerConfirmation } = require('../utils/email');
-const { generateJobPdf } = require('../utils/jobPdf');
 
 // GET /api/jobs — list jobs with search + filter + sort
 router.get('/', async (req, res) => {
@@ -16,15 +14,11 @@ router.get('/', async (req, res) => {
   const {
     search = '',
     category = '',
-    school = '',
-    industry = '',
     job_type = '',
     location = '',
     company = '',
     salary_min = '',
     salary_max = '',
-    date_from = '',
-    date_to = '',
     sort = 'newest',
     page = 1,
     limit = 10,
@@ -42,22 +36,6 @@ router.get('/', async (req, res) => {
   if (category) {
     where += ' AND j.category = ?';
     params.push(category);
-  }
-  if (school) {
-    where += ' AND j.school = ?';
-    params.push(school);
-  }
-  if (industry) {
-    where += ' AND e.industry = ?';
-    params.push(industry);
-  }
-  if (date_from) {
-    where += ' AND j.created_at >= ?';
-    params.push(`${date_from} 00:00:00`);
-  }
-  if (date_to) {
-    where += ' AND j.created_at <= ?';
-    params.push(`${date_to} 23:59:59`);
   }
   if (job_type) {
     const types = job_type.split(',').filter(Boolean);
@@ -124,7 +102,7 @@ router.get('/', async (req, res) => {
     const total = countRows[0].total;
 
     const [jobs] = await db.query(
-      `SELECT j.*, e.company_name, e.company_logo, e.industry, e.location as company_location
+      `SELECT j.*, e.company_name, e.company_logo, e.location as company_location
        FROM jobs j
        JOIN employers e ON j.employer_id = e.id
        ${where}
@@ -206,30 +184,6 @@ router.get('/companies', async (req, res) => {
       "SELECT DISTINCT e.company_name FROM employers e JOIN jobs j ON j.employer_id = e.id WHERE j.status = 'active' AND (j.deadline IS NULL OR j.deadline >= CURDATE()) ORDER BY e.company_name"
     );
     res.json({ success: true, companies: rows.map(r => r.company_name) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-});
-
-// GET /api/jobs/industries — unique employer industries for filter
-router.get('/industries', async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      "SELECT DISTINCT e.industry FROM employers e JOIN jobs j ON j.employer_id = e.id WHERE j.status = 'active' AND (j.deadline IS NULL OR j.deadline >= CURDATE()) AND e.industry IS NOT NULL AND e.industry != '' ORDER BY e.industry"
-    );
-    res.json({ success: true, industries: rows.map(r => r.industry) });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-});
-
-// GET /api/jobs/schools — distinct schools currently used on active jobs
-router.get('/schools', async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      "SELECT DISTINCT school FROM jobs WHERE school IS NOT NULL AND school != '' AND status = 'active' AND (deadline IS NULL OR deadline >= CURDATE()) ORDER BY school"
-    );
-    res.json({ success: true, schools: rows.map(r => r.school) });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error.' });
   }
@@ -378,7 +332,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authenticate, requireEmployer, async (req, res) => {
   const {
     title, description, requirements, location, job_type,
-    category, school, salary_min, salary_max, deadline,
+    category, salary_min, salary_max, deadline,
   } = req.body;
 
   if (!title || !description || !location) {
@@ -387,7 +341,7 @@ router.post('/', authenticate, requireEmployer, async (req, res) => {
 
   try {
     const [empRows] = await db.query(
-      'SELECT id, company_name, verification_status, rejection_reason FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
+      'SELECT id, verification_status, rejection_reason FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
       [req.user.id]
     );
     if (empRows.length === 0) {
@@ -411,39 +365,10 @@ router.post('/', authenticate, requireEmployer, async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO jobs (employer_id, title, description, requirements, location, job_type, category, school, salary_min, salary_max, deadline, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [employer.id, title, description, requirements, location, job_type, category, school || null, salary_min || null, salary_max || null, deadline || null]
+      `INSERT INTO jobs (employer_id, title, description, requirements, location, job_type, category, salary_min, salary_max, deadline, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [employer.id, title, description, requirements, location, job_type, category, salary_min || null, salary_max || null, deadline || null]
     );
-
-    const newJob = { id: result.insertId, title, description, requirements, location, job_type, category, school, salary_min, salary_max, deadline };
-
-    // Notify OSS admins (in-app + email) that a job needs review — don't block the response on this
-    (async () => {
-      try {
-        const [admins] = await db.query("SELECT id FROM users WHERE role = 'admin'");
-        for (const admin of admins) {
-          await createNotification({
-            userId: admin.id,
-            type: 'admin_review',
-            title: 'New job posting pending review',
-            message: `"${title}" from ${employer.company_name} is awaiting approval.`,
-            link: '/admin.html',
-            relatedId: newJob.id,
-          });
-        }
-        await sendAdminJobSubmissionAlert(newJob, employer.company_name);
-      } catch (notifyErr) {
-        console.error('Admin job submission notification error:', notifyErr);
-      }
-
-      try {
-        const pdfBuffer = await generateJobPdf(newJob, employer.company_name);
-        await sendEmployerConfirmation(newJob, req.user.email, pdfBuffer);
-      } catch (confirmErr) {
-        console.error('Employer confirmation email error:', confirmErr);
-      }
-    })();
 
     res.status(201).json({ success: true, message: 'Job submitted for review.', jobId: result.insertId });
   } catch (err) {
@@ -455,7 +380,7 @@ router.post('/', authenticate, requireEmployer, async (req, res) => {
 // PUT /api/jobs/:id — update job (employer owns it)
 router.put('/:id', authenticate, requireEmployer, async (req, res) => {
   const { id } = req.params;
-  const { title, description, requirements, location, job_type, category, school, salary_min, salary_max, deadline, status } = req.body;
+  const { title, description, requirements, location, job_type, category, salary_min, salary_max, deadline, status } = req.body;
 
   try {
     const [empRows] = await db.query(
@@ -480,7 +405,7 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
     // Editing a rejected job automatically resubmits it for admin review (pending)
     let nextStatus = existing.status;
     let clearRejectionReason = false;
-    const isContentUpdate = [title, description, requirements, location, job_type, category, school, salary_min, salary_max, deadline]
+    const isContentUpdate = [title, description, requirements, location, job_type, category, salary_min, salary_max, deadline]
       .some(v => v !== undefined);
 
     if (status !== undefined && status !== null && status !== '') {
@@ -508,17 +433,16 @@ router.put('/:id', authenticate, requireEmployer, async (req, res) => {
     const nextLocation = location !== undefined ? location : existing.location;
     const nextJobType = job_type !== undefined ? job_type : existing.job_type;
     const nextCategory = category !== undefined ? category : existing.category;
-    const nextSchool = school !== undefined ? school : existing.school;
     const nextSalaryMin = salary_min !== undefined ? (salary_min || null) : existing.salary_min;
     const nextSalaryMax = salary_max !== undefined ? (salary_max || null) : existing.salary_max;
     const nextDeadline = deadline !== undefined ? (deadline || null) : existing.deadline;
 
     await db.query(
-      `UPDATE jobs SET title=?, description=?, requirements=?, location=?, job_type=?, category=?, school=?, salary_min=?, salary_max=?, deadline=?, status=?,
+      `UPDATE jobs SET title=?, description=?, requirements=?, location=?, job_type=?, category=?, salary_min=?, salary_max=?, deadline=?, status=?,
         rejection_reason = CASE WHEN ? = 1 THEN NULL ELSE rejection_reason END
        WHERE id=?`,
       [
-        nextTitle, nextDescription, nextRequirements, nextLocation, nextJobType, nextCategory, nextSchool,
+        nextTitle, nextDescription, nextRequirements, nextLocation, nextJobType, nextCategory,
         nextSalaryMin, nextSalaryMax, nextDeadline, nextStatus,
         clearRejectionReason ? 1 : 0,
         id,

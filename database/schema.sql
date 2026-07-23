@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS jobs (
   location VARCHAR(150) NOT NULL,
   job_type ENUM('full-time', 'part-time', 'short-term', 'contract', 'remote') DEFAULT 'full-time',
   category VARCHAR(100) DEFAULT NULL,
-  school VARCHAR(100) DEFAULT NULL,
   salary_min DECIMAL(10,2) DEFAULT NULL,
   salary_max DECIMAL(10,2) DEFAULT NULL,
   deadline DATE DEFAULT NULL,
@@ -91,21 +90,11 @@ CREATE TABLE IF NOT EXISTS job_views (
   FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
 );
 
--- Site-wide pageview beacon for unique-visitor + CTR analytics
-CREATE TABLE IF NOT EXISTS page_views (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  path VARCHAR(255) NOT NULL,
-  user_id INT DEFAULT NULL,
-  ip_address VARCHAR(45) DEFAULT NULL,
-  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_page_views_viewed_at (viewed_at)
-);
-
 -- In-app notifications (application status + job alerts)
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
-  type ENUM('application_status', 'job_alert', 'admin_review') NOT NULL,
+  type ENUM('application_status', 'job_alert') NOT NULL,
   title VARCHAR(200) NOT NULL,
   message TEXT NOT NULL,
   link VARCHAR(255) DEFAULT NULL,
