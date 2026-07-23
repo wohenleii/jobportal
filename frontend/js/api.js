@@ -33,6 +33,15 @@ const api = {
     return !!this.getToken();
   },
 
+  /** Fire-and-forget pageview beacon for site analytics */
+  trackPageview() {
+    fetch(`${API_BASE}/analytics/pageview`, {
+      method: 'POST',
+      headers: this.headers(true),
+      body: JSON.stringify({ path: window.location.pathname }),
+    }).catch(() => {});
+  },
+
   /** Build headers with optional auth */
   headers(auth = true) {
     const h = { 'Content-Type': 'application/json' };

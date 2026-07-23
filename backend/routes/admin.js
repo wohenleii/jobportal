@@ -22,6 +22,10 @@ router.get('/stats', async (req, res) => {
       "SELECT COUNT(*) as pendingEmployers FROM employers WHERE verification_status = 'pending'"
     );
     const [[{ totalViews }]] = await db.query('SELECT SUM(views) as totalViews FROM jobs');
+    const [[{ totalVisits }]] = await db.query('SELECT COUNT(*) as totalVisits FROM page_views');
+    const [[{ totalUniqueVisitors }]] = await db.query(
+      'SELECT COUNT(DISTINCT COALESCE(user_id, ip_address)) as totalUniqueVisitors FROM page_views'
+    );
 
     // Jobs by category
     const [jobsByCategory] = await db.query(
@@ -55,6 +59,8 @@ router.get('/stats', async (req, res) => {
         totalEmployers,
         pendingEmployers,
         totalViews: totalViews || 0,
+        totalVisits,
+        totalUniqueVisitors,
       },
       jobsByCategory,
       jobsByType,
@@ -388,11 +394,70 @@ router.get('/analytics', async (req, res) => {
        LIMIT 10`
     );
 
-    res.json({ success: true, viewsPerDay, appsPerDay, mostApplied });
+    const engagement = await getEngagementSeries();
+
+    res.json({ success: true, viewsPerDay, appsPerDay, mostApplied, engagement });
   } catch (err) {
     console.error('Admin analytics error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
+
+/**
+ * Build daily/weekly/monthly rollups of pageviews, unique visitors, job (click) views, and CTR.
+ * CTR = job_views (clicks into a job) / page_views (site pageviews) for the same bucket, as a %.
+ */
+async function getEngagementSeries() {
+  const bucketQueries = {
+    daily: {
+      interval: 'DATE_SUB(NOW(), INTERVAL 30 DAY)',
+      pvExpr: 'DATE(viewed_at)',
+    },
+    weekly: {
+      interval: 'DATE_SUB(NOW(), INTERVAL 12 WEEK)',
+      pvExpr: "DATE_FORMAT(viewed_at, '%x-W%v')",
+    },
+    monthly: {
+      interval: 'DATE_SUB(NOW(), INTERVAL 12 MONTH)',
+      pvExpr: "DATE_FORMAT(viewed_at, '%Y-%m')",
+    },
+  };
+
+  const result = {};
+
+  for (const [bucket, { interval, pvExpr }] of Object.entries(bucketQueries)) {
+    const [pageViewRows] = await db.query(
+      `SELECT ${pvExpr} as period, COUNT(*) as pageViews,
+              COUNT(DISTINCT COALESCE(user_id, ip_address)) as uniqueVisitors
+       FROM page_views
+       WHERE viewed_at >= ${interval}
+       GROUP BY period
+       ORDER BY period`
+    );
+
+    const [jobViewRows] = await db.query(
+      `SELECT ${pvExpr} as period, COUNT(*) as jobViews
+       FROM job_views
+       WHERE viewed_at >= ${interval}
+       GROUP BY period
+       ORDER BY period`
+    );
+
+    const jobViewsByPeriod = Object.fromEntries(jobViewRows.map(r => [r.period, r.jobViews]));
+
+    result[bucket] = pageViewRows.map(row => {
+      const jobViews = jobViewsByPeriod[row.period] || 0;
+      return {
+        period: row.period,
+        pageViews: row.pageViews,
+        uniqueVisitors: row.uniqueVisitors,
+        jobViews,
+        ctr: row.pageViews > 0 ? Number(((jobViews / row.pageViews) * 100).toFixed(2)) : 0,
+      };
+    });
+  }
+
+  return result;
+}
 
 module.exports = router;

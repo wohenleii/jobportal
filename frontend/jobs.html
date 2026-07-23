@@ -127,6 +127,29 @@
           <option value="Other">Other</option>
         </select>
 
+        <div class="filter-section-title">School</div>
+        <select class="form-select form-select-sm" id="schoolFilter" onchange="applyFilters()">
+          <option value="">All Schools</option>
+          <option value="School of Business">School of Business</option>
+          <option value="School of Engineering">School of Engineering</option>
+          <option value="School of Applied Science">School of Applied Science</option>
+          <option value="School of Infocomm">School of Infocomm</option>
+          <option value="School of Sports, Health & Leisure">School of Sports, Health &amp; Leisure</option>
+          <option value="School of Hospitality">School of Hospitality</option>
+          <option value="School of Technology for the Arts">School of Technology for the Arts</option>
+        </select>
+
+        <div class="filter-section-title">Industry</div>
+        <select class="form-select form-select-sm" id="industryFilter" onchange="applyFilters()">
+          <option value="">All Industries</option>
+        </select>
+
+        <div class="filter-section-title">Posting Date</div>
+        <div class="d-flex gap-2">
+          <input type="date" class="form-control form-control-sm" id="dateFromFilter" onchange="applyFilters()" />
+          <input type="date" class="form-control form-control-sm" id="dateToFilter" onchange="applyFilters()" />
+        </div>
+
         <div class="filter-section-title">Location (Region)</div>
         <select class="form-select form-select-sm" id="locationFilter" onchange="applyFilters()">
           <option value="">All Regions</option>
@@ -224,6 +247,15 @@
   </div>
 </div>
 
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-meta">
+      <span>© 2026 JobPortal. All rights reserved.</span>
+      <a href="mailto:kwenz782@yahoo.com"><i class="bi bi-envelope me-1"></i>Need help? Contact us</a>
+    </div>
+  </div>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/api.js"></script>
 <script>
@@ -300,6 +332,10 @@ function getFilters() {
     search:     document.getElementById('searchInput').value.trim(),
     job_type:   types.join(','),
     category:   document.getElementById('categoryFilter').value,
+    school:     document.getElementById('schoolFilter').value,
+    industry:   document.getElementById('industryFilter').value,
+    date_from:  document.getElementById('dateFromFilter').value,
+    date_to:    document.getElementById('dateToFilter').value,
     location:   document.getElementById('locationFilter').value,
     company:    document.getElementById('companyFilter').value,
     salary_min: activeSalMin,
@@ -315,6 +351,10 @@ function applyFilters() { clearSmartSearch(); currentPage = 1; loadJobs(); }
 function clearFilters() {
   document.getElementById('searchInput').value = '';
   document.getElementById('categoryFilter').value = '';
+  document.getElementById('schoolFilter').value = '';
+  document.getElementById('industryFilter').value = '';
+  document.getElementById('dateFromFilter').value = '';
+  document.getElementById('dateToFilter').value = '';
   document.getElementById('locationFilter').value = '';
   document.getElementById('companyFilter').value = '';
   document.getElementById('sortSelect').value = 'newest';
@@ -367,6 +407,7 @@ function renderJobCards(jobs, showReason) {
           <div class="d-flex flex-wrap gap-2 mt-2">
             <span class="badge-type ${badgeClass(job.job_type)}">${job.job_type}</span>
             ${job.category ? `<span class="badge bg-light text-secondary">${job.category}</span>` : ''}
+            ${job.school ? `<span class="badge bg-light text-primary">${job.school}</span>` : ''}
             ${job.deadline ? `<span class="badge bg-light text-warning"><i class="bi bi-clock me-1"></i>Closes ${new Date(job.deadline).toLocaleDateString()}</span>` : ''}
           </div>
           ${showReason && job._reason ? `<div class="ai-reason">✨ ${job._reason}</div>` : ''}
@@ -403,6 +444,20 @@ async function loadCompanies() {
       sel.appendChild(opt);
     });
   } catch (err) { console.error('loadCompanies:', err); }
+}
+
+async function loadIndustries() {
+  try {
+    const res  = await fetch('/api/jobs/industries');
+    const data = await res.json();
+    const sel  = document.getElementById('industryFilter');
+    data.industries.forEach(i => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i;
+      sel.appendChild(opt);
+    });
+  } catch (err) { console.error('loadIndustries:', err); }
 }
 
 async function loadStats() {
@@ -536,7 +591,8 @@ async function toggleBookmark(e, jobId, btn) {
 
 // ── Init — runs after ALL functions are defined ────────
 (async function init() {
-  await Promise.all([loadCompanies(), loadStats()]);
+  api.trackPageview();
+  await Promise.all([loadCompanies(), loadIndustries(), loadStats()]);
   if (urlParams.get('category')) {
     document.getElementById('categoryFilter').value = urlParams.get('category');
   }
