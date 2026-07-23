@@ -544,7 +544,13 @@ async function toggleBookmark(e, jobId, btn) {
   if (urlParams.get('location')) {
     document.getElementById('locationFilter').value = urlParams.get('location');
   }
-  loadJobs();
+  // A search term (e.g. from the homepage) runs through the SAME unified search
+  // as the box on this page — natural-language queries use the Gemini AI model.
+  if (urlParams.get('search')) {
+    handleSearch();
+  } else {
+    loadJobs();
+  }
   if (urlParams.get('id')) openJobModal(urlParams.get('id'));
 })();
 </script>

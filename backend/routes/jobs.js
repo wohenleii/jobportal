@@ -210,6 +210,35 @@ router.post('/smart-search', async (req, res) => {
       return res.json({ success: true, jobs: [], total: 0 });
     }
 
+    // ── AI-powered ranking (Gemini) ─────────────────────────────────────────
+    // Falls through to keyword scoring below if the AI call fails or is unconfigured.
+    try {
+      const { aiRankJobs } = require('../utils/aiSearch');
+      const ranked = await aiRankJobs(query, jobs);
+      const byId = new Map(jobs.map(j => [j.id, j]));
+      const aiResults = ranked
+        .map(r => {
+          const job = byId.get(r.id);
+          if (!job) return null;
+          return { ...job, _score: 1, _reason: r.reason || '' };
+        })
+        .filter(Boolean)
+        .slice(0, 20);
+
+      if (aiResults.length) {
+        return res.json({ success: true, jobs: aiResults, total: aiResults.length, isFallback: false, ai: true });
+      }
+      // AI ran but found nothing relevant — show recent jobs as a soft fallback
+      const recent = [...jobs]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5)
+        .map(j => ({ ...j, _score: 0, _reason: 'No exact match — here are some recent openings.' }));
+      return res.json({ success: true, jobs: recent, total: recent.length, isFallback: true, ai: true });
+    } catch (aiErr) {
+      console.warn('AI search unavailable, using keyword fallback:', aiErr.message);
+    }
+
+    // ── Keyword fallback (no API key / AI error) ────────────────────────────
     // Score each job based on keyword relevance to query
     const queryLower = query.toLowerCase();
     const queryWords = queryLower
