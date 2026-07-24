@@ -209,17 +209,39 @@
         <h5 class="modal-title">Apply for Job</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <div id="applyAlert" class="alert d-none"></div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Cover Letter <span class="text-muted">(optional)</span></label>
-          <textarea class="form-control" id="coverLetter" rows="5" placeholder="Tell the employer why you're a great fit..."></textarea>
+
+      <div id="applyFormView">
+        <div class="modal-body">
+          <div id="applyAlert" class="alert d-none"></div>
+          <div id="applicantSummary" class="d-flex align-items-center gap-2 mb-3 p-2 bg-light rounded-3 small"></div>
+          <div class="mb-1">
+            <label class="form-label fw-semibold mb-0">Cover Letter <span class="text-muted fw-normal">(optional, but recommended)</span></label>
+            <div class="text-muted mb-2" style="font-size:.8rem"><i class="bi bi-lightbulb"></i> Mention: relevant skills &middot; why you're interested &middot; your availability</div>
+            <textarea class="form-control" id="coverLetter" rows="5" maxlength="1000" placeholder="Tell the employer why you're a great fit..." oninput="updateCoverLetterCounter()"></textarea>
+            <div class="d-flex justify-content-between mt-1">
+              <span id="coverLetterHint" class="small text-muted"></span>
+              <span id="coverLetterCounter" class="small text-muted">0 / 1000</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary fw-bold" id="submitApplyBtn" onclick="submitApplication()">Submit Application</button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary fw-bold" id="submitApplyBtn" onclick="submitApplication()">Submit Application</button>
+
+      <div id="applySuccessView" class="d-none">
+        <div class="modal-body text-center py-5">
+          <div class="mb-3" style="font-size:3rem;color:#16A34A"><i class="bi bi-check-circle-fill"></i></div>
+          <h5 class="fw-bold mb-2">Application submitted!</h5>
+          <p class="text-muted mb-0">The employer has been notified. You can track your status anytime from your profile.</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="/profile.html" class="btn btn-primary fw-bold">View My Applications</a>
+        </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -461,12 +483,54 @@ async function openJobModal(jobId) {
   }
 }
 
+let lastCheckedProfile = null;
+
 function openApplyModal() {
   ensureStudentProfileComplete().then((ok) => {
     if (!ok) return;
+    resetApplyModal();
     bootstrap.Modal.getInstance(document.getElementById('jobModal')).hide();
     setTimeout(() => new bootstrap.Modal(document.getElementById('applyModal')).show(), 300);
   });
+}
+
+function resetApplyModal() {
+  document.getElementById('applyFormView').classList.remove('d-none');
+  document.getElementById('applySuccessView').classList.add('d-none');
+  document.getElementById('applyAlert').classList.add('d-none');
+  document.getElementById('coverLetter').value = '';
+  updateCoverLetterCounter();
+
+  const btn = document.getElementById('submitApplyBtn');
+  btn.disabled = false;
+  btn.textContent = 'Submit Application';
+
+  const summary = document.getElementById('applicantSummary');
+  if (lastCheckedProfile) {
+    const hasResume = !!String(lastCheckedProfile.resume_url || '').trim();
+    summary.innerHTML = `
+      <i class="bi bi-person-circle text-primary"></i>
+      <span>Applying as <strong>${escHtmlSafe(lastCheckedProfile.name || 'you')}</strong></span>
+      <span class="ms-auto ${hasResume ? 'text-success' : 'text-warning'}">
+        <i class="bi ${hasResume ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}"></i>
+        ${hasResume ? 'Resume attached' : 'No resume on file'}
+      </span>`;
+  } else {
+    summary.innerHTML = '';
+  }
+}
+
+function escHtmlSafe(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function updateCoverLetterCounter() {
+  const val = document.getElementById('coverLetter').value;
+  document.getElementById('coverLetterCounter').textContent = `${val.length} / 1000`;
+  const hint = document.getElementById('coverLetterHint');
+  hint.textContent = val.trim().length === 0
+    ? "Tip: a short cover letter improves your chances — you can still submit without one."
+    : '';
 }
 
 async function ensureStudentProfileComplete() {
@@ -482,6 +546,7 @@ async function ensureStudentProfileComplete() {
   try {
     const data = await api.getMe();
     const profile = data.user || {};
+    lastCheckedProfile = profile;
     if (isStudentProfileComplete(profile)) return true;
     const missing = studentProfileMissingFields(profile).join(', ');
     showToast(`Please complete your profile first (${missing}). Employers need these details.`, 'warning');
@@ -504,11 +569,8 @@ async function submitApplication() {
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
   try {
     await api.applyJob(currentJobId, document.getElementById('coverLetter').value);
-    alertEl.className = 'alert alert-success';
-    alertEl.textContent = 'Application submitted successfully!';
-    alertEl.classList.remove('d-none');
-    btn.textContent = 'Applied!';
-    setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('applyModal')).hide(), 2000);
+    document.getElementById('applyFormView').classList.add('d-none');
+    document.getElementById('applySuccessView').classList.remove('d-none');
   } catch (err) {
     alertEl.className = 'alert alert-danger';
     alertEl.textContent = err.message;
