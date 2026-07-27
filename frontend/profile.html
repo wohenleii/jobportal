@@ -21,8 +21,6 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
         <li class="nav-item"><a class="nav-link" href="/jobs.html">Browse Jobs</a></li>
-        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html" onclick="localStorage.setItem('profileTab','applications')">My Applications</a></li>
-        <li class="nav-item nav-student-only"><a class="nav-link" href="/profile.html#bookmarks" onclick="localStorage.setItem('profileTab','bookmarks')">Saved Jobs</a></li>
       </ul>
       <ul class="navbar-nav align-items-center" id="navAuth"></ul>
     </div>
@@ -91,8 +89,8 @@
     <!-- Right: Tabs -->
     <div class="col-lg-8">
       <ul class="nav nav-tabs mb-4" id="profileTabs">
-        <li class="nav-item"><button class="nav-link active" onclick="showTab('applications', this)">My Applications</button></li>
-        <li class="nav-item"><button class="nav-link" onclick="showTab('bookmarks', this)">Bookmarked Jobs</button></li>
+        <li class="nav-item"><button class="nav-link active" data-tab="applications" onclick="showTab('applications', this)">My Applications</button></li>
+        <li class="nav-item"><button class="nav-link" data-tab="bookmarks" onclick="showTab('bookmarks', this)">Saved Jobs</button></li>
       </ul>
 
       <!-- Applications Tab -->
@@ -145,12 +143,10 @@
   const profileTab = localStorage.getItem('profileTab');
   if (profileTab === 'bookmarks' || profileTab === 'applications') {
     localStorage.removeItem('profileTab');
-    window.addEventListener('load', () => {
-      if (profileTab === 'bookmarks') {
-        const btn = [...document.querySelectorAll('#profileTabs .nav-link')].find(b => b.textContent.includes('Bookmark'));
-        if (btn) btn.click();
-      }
-    });
+    if (profileTab === 'bookmarks') {
+      const btn = document.querySelector('#profileTabs [data-tab="bookmarks"]');
+      if (btn) btn.click();
+    }
   }
 
   const statusColors = {
