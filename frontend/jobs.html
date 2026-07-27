@@ -262,6 +262,7 @@ let currentJobId  = null;
 let isSmartMode   = false;
 let activeSalMin  = '';
 let activeSalMax  = '';
+let appliedJobIds = new Set();
 
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('search')) document.getElementById('searchInput').value = urlParams.get('search');
@@ -371,6 +372,7 @@ async function loadJobs() {
 
 function renderJobCards(jobs, showReason) {
   const loggedIn = api.isLoggedIn();
+  const user = api.getUser();
   document.getElementById('jobsList').innerHTML = jobs.map(job => `
     <div class="job-card mb-3">
       ${loggedIn ? `<button class="bookmark-btn" onclick="toggleBookmark(event,${job.id},this)"><i class="bi bi-bookmark"></i></button>` : ''}
@@ -393,10 +395,28 @@ function renderJobCards(jobs, showReason) {
             ${job.deadline ? `<span class="badge bg-light text-warning"><i class="bi bi-clock me-1"></i>Closes ${new Date(job.deadline).toLocaleDateString()}</span>` : ''}
           </div>
           ${showReason && job._reason ? `<div class="ai-reason">✨ ${job._reason}</div>` : ''}
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-sm btn-outline-secondary" onclick="openJobModal(${job.id});">View Details</button>
+            ${user && user.role === 'student'
+              ? (appliedJobIds.has(job.id)
+                  ? `<span class="badge-applied" aria-label="Already applied"><i class="bi bi-check2 me-1"></i>Applied</span>`
+                  : `<button class="btn btn-sm btn-primary fw-bold" onclick="quickApply(${job.id});">Apply Now</button>`)
+              : ''}
+            ${!user ? `<a href="/login.html" class="btn btn-sm btn-primary fw-bold">Login to Apply</a>` : ''}
+          </div>
         </div>
       </div>
     </div>
   `).join('');
+}
+
+function quickApply(jobId) {
+  currentJobId = jobId;
+  ensureStudentProfileComplete().then((ok) => {
+    if (!ok) return;
+    resetApplyModal();
+    new bootstrap.Modal(document.getElementById('applyModal')).show();
+  });
 }
 
 function renderPagination({ page, pages }) {
@@ -474,7 +494,11 @@ async function openJobModal(jobId) {
       <h6 class="fw-bold mt-3">About ${job.company_name}</h6>
       <p class="text-muted">${job.company_description || 'No description available.'}</p>
       <div class="d-flex gap-2 mt-4">
-        ${user && user.role === 'student' ? `<button class="btn btn-primary fw-bold" onclick="openApplyModal()">Apply Now</button>` : ''}
+        ${user && user.role === 'student'
+          ? (appliedJobIds.has(job.id)
+              ? `<span class="badge-applied" aria-label="Already applied"><i class="bi bi-check2 me-1"></i>Applied</span>`
+              : `<button class="btn btn-primary fw-bold" onclick="openApplyModal()">Apply Now</button>`)
+          : ''}
         ${!user ? `<a href="/login.html" class="btn btn-primary fw-bold">Login to Apply</a>` : ''}
         ${api.isLoggedIn() ? `<button class="btn btn-outline-warning" onclick="toggleBookmark(event,${job.id},this)"><i class="bi bi-bookmark"></i> Save Job</button>` : ''}
       </div>`;
@@ -569,8 +593,10 @@ async function submitApplication() {
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
   try {
     await api.applyJob(currentJobId, document.getElementById('coverLetter').value);
+    appliedJobIds.add(currentJobId);
     document.getElementById('applyFormView').classList.add('d-none');
     document.getElementById('applySuccessView').classList.remove('d-none');
+    loadJobs();
   } catch (err) {
     alertEl.className = 'alert alert-danger';
     alertEl.textContent = err.message;
@@ -599,6 +625,13 @@ async function toggleBookmark(e, jobId, btn) {
 
 // ── Init — runs after ALL functions are defined ────────
 (async function init() {
+  const initUser = api.getUser();
+  if (initUser && initUser.role === 'student') {
+    try {
+      const appsData = await api.getMyApplications();
+      appliedJobIds = new Set((appsData.applications || []).map(a => a.job_id));
+    } catch (err) { console.error('Failed to load applied jobs:', err); }
+  }
   await Promise.all([loadCompanies(), loadStats()]);
   if (urlParams.get('category')) {
     document.getElementById('categoryFilter').value = urlParams.get('category');
