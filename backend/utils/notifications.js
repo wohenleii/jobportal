@@ -102,8 +102,30 @@ async function notifyJobAlerts(jobId) {
   }
 }
 
+/**
+ * Notify employer when their company verification is rejected.
+ */
+async function notifyCompanyVerificationRejection(employer, reason) {
+  if (!employer?.user_id) return;
+
+  const companyName = employer.company_name || 'your company';
+  const reasonText = String(reason || '').trim();
+
+  await createNotification({
+    userId: employer.user_id,
+    type: 'company_verification',
+    title: 'Company verification rejected',
+    message: reasonText
+      ? `${companyName} was rejected: ${reasonText} Update your company profile to resubmit for review.`
+      : `${companyName} was rejected. Update your company profile to resubmit for review.`,
+    link: '/employer.html',
+    relatedId: employer.id,
+  });
+}
+
 module.exports = {
   createNotification,
   notifyApplicationStatus,
   notifyJobAlerts,
+  notifyCompanyVerificationRejection,
 };

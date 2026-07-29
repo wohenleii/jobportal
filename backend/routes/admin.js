@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
-const { notifyJobAlerts } = require('../utils/notifications');
+const { notifyJobAlerts, notifyCompanyVerificationRejection } = require('../utils/notifications');
 const { closeExpiredJobs } = require('../utils/closeExpiredJobs');
 
 // All admin routes require authentication + admin role
@@ -123,7 +123,7 @@ router.put('/employers/:id/status', async (req, res) => {
   }
 
   try {
-    const [rows] = await db.query('SELECT id FROM employers WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT id, user_id, company_name FROM employers WHERE id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Employer not found.' });
     }
@@ -139,12 +139,18 @@ router.put('/employers/:id/status', async (req, res) => {
     }
 
     if (status === 'rejected') {
+      const reason = String(rejection_reason).trim();
       await db.query(
         `UPDATE employers
          SET verification_status = 'rejected', rejection_reason = ?, verified_at = NULL
          WHERE id = ?`,
-        [String(rejection_reason).trim(), id]
+        [reason, id]
       );
+      try {
+        await notifyCompanyVerificationRejection(rows[0], reason);
+      } catch (notifyErr) {
+        console.error('Company rejection notification error:', notifyErr);
+      }
       return res.json({ success: true, message: 'Company rejected.' });
     }
 

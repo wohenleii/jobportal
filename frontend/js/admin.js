@@ -303,6 +303,9 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
 
   async function loadCompanies() {
     const status = document.getElementById('companyStatusFilter').value;
+    const hideActions = status === 'rejected';
+    const actionsHeader = document.getElementById('companiesActionsHeader');
+    if (actionsHeader) actionsHeader.classList.toggle('d-none', hideActions);
     try {
       const data = await api.getAdminEmployers({ status, page: companiesPage, limit: 15 });
       companiesCache = {};
@@ -327,17 +330,17 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
             <td class="text-muted small">${escapeHtml(e.location) || '—'}</td>
             <td>${verificationBadge(e.verification_status)}</td>
             <td class="text-muted small">${new Date(e.created_at).toLocaleDateString()}</td>
-            <td class="text-nowrap">
-              ${e.verification_status !== 'approved'
-                ? `<button class="btn btn-sm btn-success me-1" title="Approve" onclick="approveCompany(${e.id})"><i class="bi bi-check-lg"></i></button>`
-                : ''}
-              ${e.verification_status !== 'rejected'
-                ? `<button class="btn btn-sm btn-outline-danger" title="Reject" onclick="openRejectModal(${e.id})"><i class="bi bi-x-lg"></i></button>`
-                : `<button class="btn btn-sm btn-outline-secondary" title="Set Pending" onclick="setCompanyPending(${e.id})"><i class="bi bi-arrow-counterclockwise"></i></button>`}
-            </td>
+            ${hideActions ? '' : `<td class="text-nowrap">
+              ${e.verification_status === 'rejected'
+                ? '<span class="text-muted small">—</span>'
+                : `${e.verification_status !== 'approved'
+                    ? `<button class="btn btn-sm btn-success me-1" title="Approve" onclick="approveCompany(${e.id})"><i class="bi bi-check-lg"></i></button>`
+                    : ''}
+                  <button class="btn btn-sm btn-outline-danger" title="Reject" onclick="openRejectModal(${e.id})"><i class="bi bi-x-lg"></i></button>`}
+            </td>`}
           </tr>
         `).join('')
-        : '<tr><td colspan="8" class="text-center text-muted py-4">No companies found.</td></tr>';
+        : `<tr><td colspan="${hideActions ? 7 : 8}" class="text-center text-muted py-4">No companies found.</td></tr>`;
       renderAdminPagination('companiesPagination', data.pagination, p => { companiesPage = p; loadCompanies(); });
     } catch (err) {
       showToast(err.message || 'Failed to load companies', 'danger');
@@ -412,11 +415,12 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
       </div>
     `;
 
+    // Rejected companies are final until the employer edits their profile (auto-pending)
     let actions = '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>';
-    if (e.verification_status !== 'approved') {
-      actions = `<button type="button" class="btn btn-success" onclick="companyDetailsModal.hide(); approveCompany(${e.id})"><i class="bi bi-check-lg me-1"></i>Approve</button>` + actions;
-    }
     if (e.verification_status !== 'rejected') {
+      if (e.verification_status !== 'approved') {
+        actions = `<button type="button" class="btn btn-success" onclick="companyDetailsModal.hide(); approveCompany(${e.id})"><i class="bi bi-check-lg me-1"></i>Approve</button>` + actions;
+      }
       actions = `<button type="button" class="btn btn-outline-danger me-auto" onclick="companyDetailsModal.hide(); openRejectModal(${e.id})"><i class="bi bi-x-lg me-1"></i>Reject</button>` + actions;
     }
     footer.innerHTML = actions;
@@ -461,15 +465,6 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
     }
   }
 
-  async function setCompanyPending(id) {
-    try {
-      await api.updateEmployerStatus(id, 'pending');
-      showToast('Company set to pending', 'success');
-      loadCompanies();
-    } catch (err) {
-      showToast(err.message, 'danger');
-    }
-  }
   // ── Users ────────────────────────────────────────────────────────────────
   let removeUserTarget = null;
   let removeUserModal;
@@ -573,6 +568,9 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
 
   async function loadAdminJobs() {
     const status = document.getElementById('jobStatusFilter').value;
+    const hideActions = status === 'rejected';
+    const actionsHeader = document.getElementById('jobsActionsHeader');
+    if (actionsHeader) actionsHeader.classList.toggle('d-none', hideActions);
     try {
       const data = await api.getAdminJobs({ status, page: jobsPage, limit: 15 });
       jobsCache = {};
@@ -593,19 +591,17 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
           <td><span class="badge-type ${badgeClass(j.job_type)}">${j.job_type}</span></td>
           <td>${jobStatusBadge(j.status, j)}</td>
           <td>${j.views}</td>
-          <td class="text-nowrap">
-            ${status === 'past' ? '<span class="text-muted small">—</span>' : `
-            ${j.status !== 'active'
-              ? `<button class="btn btn-sm btn-success me-1" title="Approve" onclick="approveJob(${j.id})"><i class="bi bi-check-lg"></i></button>`
-              : ''}
-            ${j.status !== 'rejected'
-              ? `<button class="btn btn-sm btn-outline-danger" title="Reject" onclick="openRejectJobModal(${j.id})"><i class="bi bi-x-lg"></i></button>`
-              : `<button class="btn btn-sm btn-outline-secondary" title="Set Pending" onclick="setJobPending(${j.id})"><i class="bi bi-arrow-counterclockwise"></i></button>`}
-            `}
-          </td>
+          ${hideActions ? '' : `<td class="text-nowrap">
+            ${status === 'past' || j.status === 'rejected'
+              ? '<span class="text-muted small">—</span>'
+              : `${j.status !== 'active'
+                  ? `<button class="btn btn-sm btn-success me-1" title="Approve" onclick="approveJob(${j.id})"><i class="bi bi-check-lg"></i></button>`
+                  : ''}
+                <button class="btn btn-sm btn-outline-danger" title="Reject" onclick="openRejectJobModal(${j.id})"><i class="bi bi-x-lg"></i></button>`}
+          </td>`}
         </tr>
       `).join('')
-        : '<tr><td colspan="7" class="text-center text-muted py-4">No jobs found.</td></tr>';
+        : `<tr><td colspan="${hideActions ? 6 : 7}" class="text-center text-muted py-4">No jobs found.</td></tr>`;
       renderAdminPagination('jobsPagination', data.pagination, p => { jobsPage = p; loadAdminJobs(); });
     } catch (err) {
       showToast(err.message || 'Failed to load jobs', 'danger');
@@ -642,16 +638,6 @@ let rejectModal, rejectJobModal, jobDetailsModal, companyDetailsModal;
       await api.updateJobStatus(id, 'rejected', reason);
       rejectJobModal.hide();
       showToast('Job rejected', 'success');
-      loadAdminJobs();
-    } catch (err) {
-      showToast(err.message, 'danger');
-    }
-  }
-
-  async function setJobPending(id) {
-    try {
-      await api.updateJobStatus(id, 'pending');
-      showToast('Job set to pending', 'success');
       loadAdminJobs();
     } catch (err) {
       showToast(err.message, 'danger');

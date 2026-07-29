@@ -91,11 +91,11 @@ CREATE TABLE IF NOT EXISTS job_views (
   FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
 );
 
--- In-app notifications (application status + job alerts)
+-- In-app notifications (application status + job alerts + company verification)
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
-  type ENUM('application_status', 'job_alert') NOT NULL,
+  type ENUM('application_status', 'job_alert', 'admin_review', 'company_verification') NOT NULL,
   title VARCHAR(200) NOT NULL,
   message TEXT NOT NULL,
   link VARCHAR(255) DEFAULT NULL,

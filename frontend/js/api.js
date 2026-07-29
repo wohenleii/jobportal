@@ -362,7 +362,7 @@ function timeAgoShort(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-/** Poll + toast new notifications for students */
+/** Poll + toast new notifications for students and employers */
 const notificationPoller = {
   timer: null,
   knownIds: new Set(),
@@ -370,7 +370,7 @@ const notificationPoller = {
 
   start() {
     const user = api.getUser();
-    if (!user || user.role !== 'student' || !api.isLoggedIn()) {
+    if (!user || !['student', 'employer'].includes(user.role) || !api.isLoggedIn()) {
       this.stop();
       return;
     }
@@ -389,7 +389,7 @@ const notificationPoller = {
   async refresh(initial = false) {
     if (!api.isLoggedIn()) return;
     const user = api.getUser();
-    if (!user || user.role !== 'student') return;
+    if (!user || !['student', 'employer'].includes(user.role)) return;
 
     try {
       const data = await api.getNotifications(30);
@@ -409,9 +409,11 @@ const notificationPoller = {
         const toastType =
           n.type === 'job_alert'
             ? 'info'
-            : (n.title || '').toLowerCase().includes('hired') || (n.title || '').toLowerCase().includes('shortlisted')
-              ? 'success'
-              : 'warning';
+            : n.type === 'company_verification'
+              ? 'warning'
+              : (n.title || '').toLowerCase().includes('hired') || (n.title || '').toLowerCase().includes('shortlisted')
+                ? 'success'
+                : 'warning';
         showToast(n.message || n.title, toastType);
       });
       list.forEach((n) => this.knownIds.add(n.id));
@@ -454,11 +456,13 @@ function renderNotificationDropdown(list) {
         const icon =
           n.type === 'job_alert'
             ? 'bi-briefcase'
-            : (n.title || '').toLowerCase().includes('hired')
-              ? 'bi-trophy'
-              : (n.title || '').toLowerCase().includes('shortlisted')
-                ? 'bi-star'
-                : 'bi-x-circle';
+            : n.type === 'company_verification'
+              ? 'bi-building-x'
+              : (n.title || '').toLowerCase().includes('hired')
+                ? 'bi-trophy'
+                : (n.title || '').toLowerCase().includes('shortlisted')
+                  ? 'bi-star'
+                  : 'bi-x-circle';
         const href = escHtml(n.link || '#');
         return `
         <li>
@@ -546,7 +550,7 @@ function updateNavAuth() {
   if (user) {
     const safeName = String(user.name || 'Account').replace(/</g, '&lt;');
     const notifBell =
-      user.role === 'student'
+      user.role === 'student' || user.role === 'employer'
         ? `
       <li class="nav-item dropdown me-1">
         <a class="nav-link position-relative notif-bell" href="#" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications" id="notifBellBtn">
@@ -582,7 +586,7 @@ function updateNavAuth() {
       </li>
     `;
 
-    if (user.role === 'student') notificationPoller.start();
+    if (user.role === 'student' || user.role === 'employer') notificationPoller.start();
     else notificationPoller.stop();
   } else {
     notificationPoller.stop();

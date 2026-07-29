@@ -317,13 +317,39 @@ router.put('/employer-profile', authenticate, async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT id FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
+      'SELECT id, verification_status FROM employers WHERE user_id = ? ORDER BY id ASC LIMIT 1',
       [req.user.id]
     );
     if (rows.length === 0) {
       return res.status(400).json({ success: false, message: 'Employer profile not found.' });
     }
-    // Employers may update their profile while pending/rejected/approved
+
+    // Editing a rejected company profile resubmits it for admin review
+    const wasRejected = rows[0].verification_status === 'rejected';
+    if (wasRejected) {
+      await db.query(
+        `UPDATE employers
+         SET company_name=?, company_description=?, industry=?, location=?, company_website=?, uen=?,
+             verification_status='pending', rejection_reason=NULL, verified_at=NULL
+         WHERE id=?`,
+        [
+          String(company_name).trim(),
+          company_description ? String(company_description).trim() : null,
+          industry || null,
+          location || null,
+          website || null,
+          uenValue,
+          rows[0].id,
+        ]
+      );
+      return res.json({
+        success: true,
+        message: 'Company profile updated and resubmitted for admin review.',
+        verification_status: 'pending',
+      });
+    }
+
+    // Employers may update their profile while pending/approved
     await db.query(
       'UPDATE employers SET company_name=?, company_description=?, industry=?, location=?, company_website=?, uen=? WHERE id=?',
       [
@@ -336,7 +362,11 @@ router.put('/employer-profile', authenticate, async (req, res) => {
         rows[0].id,
       ]
     );
-    res.json({ success: true, message: 'Company profile updated successfully.' });
+    res.json({
+      success: true,
+      message: 'Company profile updated successfully.',
+      verification_status: rows[0].verification_status || 'pending',
+    });
   } catch (err) {
     console.error('Update employer profile error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });

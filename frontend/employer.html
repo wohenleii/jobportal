@@ -47,6 +47,18 @@
     </div>
     <div class="d-flex align-items-center gap-2">
       <div class="dropdown">
+        <a class="nav-link position-relative notif-bell px-2" href="#" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications" id="notifBellBtn">
+          <i class="bi bi-bell fs-5" aria-hidden="true"></i>
+          <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow notif-dropdown" id="notifMenu">
+          <li class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+            <span class="fw-semibold small">Notifications</span>
+            <a href="#" class="small" onclick="markAllNotificationsRead(event)">Mark all read</a>
+          </li>
+        </ul>
+      </div>
+      <div class="dropdown">
         <button class="btn d-flex align-items-center gap-2 border-0 bg-transparent p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu">
           <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:700" id="employerAvatar">E</div>
           <span class="text-dark fw-semibold small d-none d-sm-inline" id="employerName"></span>
@@ -552,6 +564,7 @@
   document.getElementById('employerName').textContent = currentCompanyName;
   document.getElementById('employerAvatar').textContent = (currentCompanyName.charAt(0) || 'E').toUpperCase();
   document.getElementById('welcomeName').textContent = currentCompanyName;
+  notificationPoller.start();
 
   // Modal instances
   const postJobModal = new bootstrap.Modal(document.getElementById('postJobModal'));
@@ -639,7 +652,7 @@
               <div class="mt-1">${companyVerification.rejection_reason
                 ? `Reason: ${escHtml(companyVerification.rejection_reason)}`
                 : 'Please update your company profile and wait for admin review.'}</div>
-              <div class="small mt-1">Update your company profile, then wait for an admin to review again. You cannot post jobs until approved.</div>
+              <div class="small mt-1">Edit and save your company profile to resubmit for review. You cannot post jobs until approved.</div>
             </div>
           </div>
           ${profileBtn}
@@ -1695,14 +1708,20 @@
       company_website: website,
     };
     try {
-      await api.updateEmployerProfile(payload);
+      const result = await api.updateEmployerProfile(payload);
       setDisplayIdentity(company_name);
       companyVerification.profileComplete = isProfileComplete(payload);
       companyVerification.company_name = company_name;
+      if (result.verification_status) {
+        companyVerification.status = result.verification_status;
+        if (result.verification_status === 'pending') {
+          companyVerification.rejection_reason = null;
+        }
+      }
       renderVerificationBanner();
       showToast(
         companyVerification.status === 'pending'
-          ? 'Profile saved. Waiting for admin approval — you can keep updating your details anytime.'
+          ? (result.message || 'Profile saved and resubmitted for admin review.')
           : 'Company profile saved successfully!',
         'success'
       );
